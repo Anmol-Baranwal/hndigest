@@ -14,10 +14,9 @@ export async function GET(req: NextRequest) {
   const session = await getSessionFromRequest(req);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const record = getScheduleByEmail(session.email);
+  const record = await getScheduleByEmail(session.email);
   if (!record) return NextResponse.json({ schedule: null });
 
-  // Don't expose the encrypted key
   const { encryptedResendKey: _, ...safe } = record;
   return NextResponse.json({ schedule: safe });
 }
@@ -35,10 +34,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Resend API key required" }, { status: 400 });
   }
 
-  const existing = getScheduleByEmail(session.email);
+  const existing = await getScheduleByEmail(session.email);
   const now = new Date().toISOString();
 
-  const record = createSchedule({
+  const record = await createSchedule({
     id: existing?.id ?? randomUUID(),
     ownerEmail: session.email,
     encryptedResendKey: encrypt(resendApiKey),
@@ -55,14 +54,13 @@ export async function PATCH(req: NextRequest) {
   const session = await getSessionFromRequest(req);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const existing = getScheduleByEmail(session.email);
+  const existing = await getScheduleByEmail(session.email);
   if (!existing) return NextResponse.json({ error: "No schedule found" }, { status: 404 });
 
   const body = await req.json();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updates: any = { ...body };
 
-  // Encrypt API keys before storing
   if (body.resendApiKey) {
     updates.encryptedResendKey = encrypt(body.resendApiKey);
     delete updates.resendApiKey;
@@ -72,7 +70,7 @@ export async function PATCH(req: NextRequest) {
     delete updates.llmApiKey;
   }
 
-  const updated = updateSchedule(existing.id, updates);
+  const updated = await updateSchedule(existing.id, updates);
   if (!updated) return NextResponse.json({ error: "Update failed" }, { status: 500 });
 
   const { encryptedResendKey: _r, encryptedLlmKey: _l, ...safe } = updated;
@@ -83,9 +81,9 @@ export async function DELETE(req: NextRequest) {
   const session = await getSessionFromRequest(req);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const existing = getScheduleByEmail(session.email);
+  const existing = await getScheduleByEmail(session.email);
   if (!existing) return NextResponse.json({ error: "No schedule found" }, { status: 404 });
 
-  deleteSchedule(existing.id);
+  await deleteSchedule(existing.id);
   return NextResponse.json({ success: true });
 }

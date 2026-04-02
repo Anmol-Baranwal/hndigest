@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const schedules = getAllActiveSchedules();
+  const schedules = await getAllActiveSchedules();
   const now = new Date();
   const results: { email: string; status: string }[] = [];
 
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
       });
 
       const history = record.sendHistory ?? [];
-      updateSchedule(record.id, {
+      await updateSchedule(record.id, {
         sendHistory: [
           { sentAt: now.toISOString(), recipientCount: record.recipients.length, success: true },
           ...history,
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
     } catch (err) {
       console.error(`Failed to send for ${record.ownerEmail}:`, err);
       const history = record.sendHistory ?? [];
-      updateSchedule(record.id, {
+      await updateSchedule(record.id, {
         sendHistory: [
           { sentAt: now.toISOString(), recipientCount: record.recipients.length, success: false, error: String(err) },
           ...history,
@@ -77,7 +77,7 @@ function shouldSendNow(
   if (Math.abs(currentMinutes - scheduledMinutes) > 30) return false;
 
   if (frequency === "daily") return true;
-  if (frequency === "weekly") return now.getUTCDay() === (day ?? 1); // default Monday
-  if (frequency === "monthly") return now.getUTCDate() === (day ?? 1); // default 1st
+  if (frequency === "weekly") return now.getUTCDay() === (day ?? 1);
+  if (frequency === "monthly") return now.getUTCDate() === (day ?? 1);
   return false;
 }

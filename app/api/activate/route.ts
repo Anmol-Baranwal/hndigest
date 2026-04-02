@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     const now = new Date().toISOString();
-    createSchedule({
+    await createSchedule({
       id: randomUUID(),
       ownerEmail: email,
       encryptedResendKey: encrypt(resendApiKey),

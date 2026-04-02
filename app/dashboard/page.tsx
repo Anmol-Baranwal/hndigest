@@ -7,7 +7,7 @@ export default async function DashboardPage() {
   const session = await getSessionFromCookies();
   if (!session) redirect("/");
 
-  const schedule = getScheduleByEmail(session.email);
+  const schedule = await getScheduleByEmail(session.email);
 
   return <DashboardView email={session.email} schedule={schedule} />;
 }
