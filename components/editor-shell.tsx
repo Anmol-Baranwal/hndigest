@@ -5,7 +5,7 @@ import { NewsletterEditor } from "./newsletter-editor";
 
 export function EditorShell() {
   return (
-    <CopilotKit runtimeUrl="/api/copilotkit">
+    <CopilotKit runtimeUrl="/api/copilotkit" enableInspector={false}>
       <NewsletterEditor />
     </CopilotKit>
   );

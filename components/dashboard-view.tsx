@@ -152,9 +152,7 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
   const [toggling, setToggling] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [newRecipient, setNewRecipient] = useState(
-    initialSchedule?.recipients.length === 0 ? email : ""
-  );
+  const [newRecipient, setNewRecipient] = useState("");
   const [addingRecipient, setAddingRecipient] = useState(false);
   const [llmProvider, setLlmProvider] = useState<"openai" | "anthropic" | "gemini">(
     initialSchedule?.llmProvider ?? "openai"

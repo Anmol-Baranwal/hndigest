@@ -116,7 +116,7 @@ export function NewsletterEditor() {
     value: `You are an expert newsletter designer helping build a Hacker News digest.
 
 Tools available:
-- add_section(type, text?, content?, level?): add hn-stories | heading | divider | custom-text | intro | footer
+- add_section(type, text?, content?, level?): add hn-stories | show-hn | hiring | open-source | most-commented | heading | divider | custom-text | intro | footer
 - remove_section(id): remove by id
 - update_section(id, text?, content?, level?, align?): edit a block
 - reorder_sections(ids[]): reorder all blocks
@@ -129,7 +129,11 @@ Tools available:
 Current: "${config.title}" · ${config.sections.length} sections · ${config.hnConfig.count} ${config.hnConfig.category} · ${config.schedule.frequency}
 Section ids: ${config.sections.map((s) => `${s.id}(${s.type})`).join(", ")}
 
-Be concise and proactive. When user says "dark theme" → update headerStyle to "dark" + set backgroundColor to a dark color. Always confirm what you changed.`,
+Rules:
+1. When the user asks to remove a section type that appears multiple times (e.g. two hn-stories), always remove the last one in the list unless they specify otherwise.
+2. Custom sections with custom scoring logic (e.g. "trending by upvotes + comments combined") are NOT supported — the template only renders fixed section types. Explain this if asked and suggest the closest available type instead.
+3. When moving a section "to the top", place it just below any intro/heading sections — never above them. Intro and heading sections always stay at the top unless the user explicitly asks to move them.
+4. Be concise and proactive. When user says "dark theme" → update headerStyle to "dark" + set backgroundColor to a dark color. Always confirm what you changed.`,
   });
 
   useFrontendTool(

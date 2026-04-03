@@ -12,16 +12,19 @@ export function ActivateModal({ config, onClose }: Props) {
   const [step, setStep] = useState<"key" | "email" | "sent">("key");
   const [resendKey, setResendKey] = useState("");
   const [email, setEmail] = useState("");
-  const [recipients, setRecipients] = useState(
-    config.recipients.join(", ")
-  );
+  const [recipients, setRecipients] = useState(config.recipients.join(", "));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [devLink, setDevLink] = useState("");
+  const [testSent, setTestSent] = useState(false);
 
   const handleTestSend = async () => {
-    if (!resendKey || !recipients) {
-      setError("API key and at least one recipient required");
+    if (!resendKey) {
+      setError("Resend API key is required");
+      return;
+    }
+    if (!recipients) {
+      setError("Enter at least one recipient to send a test");
       return;
     }
     setLoading(true);
@@ -38,6 +41,7 @@ export function ActivateModal({ config, onClose }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      setTestSent(true);
       setStep("email");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Send failed");
@@ -54,17 +58,14 @@ export function ActivateModal({ config, onClose }: Props) {
     setLoading(true);
     setError("");
     try {
-      // Save schedule + send magic link in one call
       const res = await fetch("/api/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, config, resendApiKey: resendKey }),
+        body: JSON.stringify({ email, config, resendApiKey: resendKey || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-
       if (data.devLink) setDevLink(data.devLink);
-
       setStep("sent");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to activate");
@@ -111,7 +112,7 @@ export function ActivateModal({ config, onClose }: Props) {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-medium text-[#444]">
-                  Resend API Key <span className="text-[#aaa] font-normal">(optional)</span>
+                  Resend API Key <span className="text-red-400">*</span>
                 </label>
                 <a
                   href="https://resend.com/api-keys"
@@ -126,7 +127,7 @@ export function ActivateModal({ config, onClose }: Props) {
                 type="password"
                 value={resendKey}
                 onChange={(e) => setResendKey(e.target.value)}
-                placeholder="re_..."
+                placeholder="re_... (send access only)"
                 className="w-full border border-[#e8e6e0] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF6600] transition-colors"
               />
               <p className="text-xs text-[#aaa] mt-1">
@@ -154,7 +155,11 @@ export function ActivateModal({ config, onClose }: Props) {
               {loading ? "Sending test…" : "Send test email →"}
             </button>
             <button
-              onClick={() => { setError(""); setStep("email"); }}
+              onClick={() => {
+                if (!resendKey) { setError("Resend API key is required"); return; }
+                setError("");
+                setStep("email");
+              }}
               className="w-full text-sm text-[#aaa] hover:text-[#666] transition-colors py-1"
             >
               Skip test, activate directly →
@@ -165,9 +170,11 @@ export function ActivateModal({ config, onClose }: Props) {
         {/* Step 2: Email for magic link */}
         {step === "email" && (
           <div className="space-y-4">
-            <div className="bg-green-50 border border-green-100 rounded-lg p-3 text-sm text-green-700">
-              Test email sent! Now let's activate your recurring schedule.
-            </div>
+            {testSent && (
+              <div className="bg-green-50 border border-green-100 rounded-lg p-3 text-sm text-green-700">
+                Test email sent! Now let's activate your recurring schedule.
+              </div>
+            )}
             <div>
               <p className="text-sm text-[#666] mb-4">
                 Enter your email to activate your{" "}
@@ -192,6 +199,12 @@ export function ActivateModal({ config, onClose }: Props) {
               className="w-full bg-[#FF6600] text-white py-2.5 rounded-lg text-sm font-medium hover:bg-[#e55b00] transition-colors disabled:opacity-50"
             >
               {loading ? "Sending magic link…" : "Activate schedule →"}
+            </button>
+            <button
+              onClick={() => { setError(""); setStep("key"); }}
+              className="w-full text-sm text-[#aaa] hover:text-[#666] transition-colors py-1"
+            >
+              ← Back
             </button>
           </div>
         )}
