@@ -28,9 +28,9 @@ export default function LandingPage() {
           <div className="inline-flex items-center gap-2 text-xs text-[#6b6b6b] bg-[#f0efe9] border border-[#e8e6e0] rounded-full px-3 py-1.5 mb-8">
             <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block" />
             Powered by{" "}
-            <a href="https://resend.com?ref=hn-digest" target="_blank" rel="noopener noreferrer" className="text-[#6b6b6b] no-underline">Resend</a>
+            <a href="https://resend.com?ref=hn-digest" target="_blank" rel="noopener noreferrer" className="text-[#1a1a1a] font-medium hover:underline">Resend</a>
             {" "}+{" "}
-            <a href="https://copilotkit.ai?ref=hn-digest" target="_blank" rel="noopener noreferrer" className="text-[#6b6b6b] no-underline">CopilotKit</a>
+            <a href="https://copilotkit.ai?ref=hn-digest" target="_blank" rel="noopener noreferrer" className="text-[#1a1a1a] font-medium hover:underline">CopilotKit</a>
           </div>
           <h1 className="font-serif text-6xl text-[#1a1a1a] leading-[1.1] mb-6">
             Your HN digest,
@@ -68,7 +68,7 @@ export default function LandingPage() {
           </h2>
           <p className="text-[#6b6b6b] text-base leading-relaxed mb-8">
             Type &ldquo;show the top 7 stories with a dark header and serif
-            font&rdquo; — the AI updates your newsletter live. No menus, no
+            font&rdquo;. The AI updates your newsletter live. No menus, no
             config panels.
           </p>
           <ul className="space-y-3">
@@ -144,7 +144,7 @@ export default function LandingPage() {
           </h2>
           <p className="text-[#6b6b6b] text-base leading-relaxed">
             Every change the AI makes reflects instantly in the preview pane.
-            What you see is exactly what lands in inboxes — rendered with
+            What you see is exactly what lands in inboxes, rendered with
             real HN data, live.
           </p>
         </div>
@@ -162,7 +162,7 @@ export default function LandingPage() {
           </h2>
           <p className="text-[#6b6b6b] text-base leading-relaxed mb-8">
             Activate your schedule with a magic link. Fresh HN stories are
-            fetched at send time — no stale data, ever. Pause or update anytime
+            fetched at send time. No stale data, ever. Pause or update anytime
             from your dashboard.
           </p>
           <div className="grid grid-cols-3 gap-4">
@@ -288,24 +288,47 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-[#e8e6e0] px-8 py-8 max-w-6xl mx-auto flex items-center justify-between">
-        <span className="text-sm text-[#aaa]">HN Digest</span>
-        <span className="text-sm text-[#aaa]">
-          Built with{" "}
+      <section className="border-t border-[#e8e6e0] bg-[#1a1a1a]">
+        <div className="max-w-6xl mx-auto px-8 py-14 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div>
+            <div className="inline-flex items-center gap-2 text-xs text-[#888] bg-[#2a2a2a] border border-[#333] rounded-full px-3 py-1.5 mb-4">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full inline-block" />
+              100% Open Source
+            </div>
+            <h2 className="font-serif text-3xl text-white mb-3">
+              Read the code. Fork it. Own it.
+            </h2>
+
+            <p className="text-[#888] text-sm leading-relaxed max-w-md">
+              HN Digest is fully open source. No black boxes. Inspect how your
+              newsletter is built, how your API key is stored, and how emails
+              are sent.
+            </p>
+          </div>
           <a
-            href="https://copilotkit.ai"
-            className="hover:text-[#666] transition-colors"
+            href="https://github.com/Anmol-Baranwal/hndigest"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 bg-white text-[#1a1a1a] px-6 py-3.5 rounded-full text-sm font-medium hover:bg-[#f0efe9] transition-colors flex-shrink-0"
           >
-            CopilotKit
-          </a>{" "}
-          +{" "}
-          <a
-            href="https://resend.com"
-            className="hover:text-[#666] transition-colors"
-          >
-            Resend
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+            Star on GitHub
           </a>
-        </span>
+        </div>
+      </section>
+
+      <footer className="border-t border-[#333] bg-[#1a1a1a] px-8 py-6">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <span className="text-sm text-[#666]">HN Digest</span>
+          <span className="text-sm text-[#666]">
+            Built with{" "}
+            <a href="https://copilotkit.ai" className="hover:text-[#aaa] transition-colors">CopilotKit</a>
+            {" "}+{" "}
+            <a href="https://resend.com" className="hover:text-[#aaa] transition-colors">Resend</a>
+          </span>
+        </div>
       </footer>
     </div>
   );

@@ -168,9 +168,8 @@ function EmailFooter({ unsubscribeUrl }: { unsubscribeUrl?: string }) {
   return (
     <Section style={{ borderTop: "1px solid #ebebeb", padding: "20px 24px 0", marginTop: "16px" }}>
       <Text style={{ color: "#bbb", fontSize: "11px", textAlign: "center", margin: "0 0 6px", lineHeight: "1.6" }}>
-        Built with HN Digest ·{" "}
         <Link href="https://github.com/Anmol-Baranwal/hndigest" style={{ color: "#bbb" }}>
-          ⭐ Star on GitHub
+          ⭐ Star HN Digest on GitHub
         </Link>
         {unsubscribeUrl && (
           <>

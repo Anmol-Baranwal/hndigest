@@ -14,6 +14,11 @@ const SECTION_PALETTE = [
   { type: "hiring",         icon: "💼", label: "Who's Hiring",    desc: "Latest jobs from HN" },
   { type: "open-source",    icon: "⭐", label: "Open Source",     desc: "Trending GitHub projects" },
   { type: "most-commented", icon: "💬", label: "Most Discussed",  desc: "Highest comment threads" },
+  { type: "trending",       icon: "📈", label: "Trending",         desc: "Combined upvotes + discussion score" },
+  { type: "ask-hn",        icon: "❓", label: "Ask HN",            desc: "Top community questions" },
+  { type: "topic",         icon: "🔍", label: "Topic",             desc: "Stories by keyword (AI, Rust, etc.)" },
+  { type: "recent-gems",   icon: "💎", label: "Recent Gems",       desc: "New stories with high points" },
+  { type: "high-signal",   icon: "📡", label: "High Signal",       desc: "High points, low comments" },
   { type: "heading",        icon: "H",  label: "Heading",          desc: "A section title" },
   { type: "custom-text",    icon: "¶",  label: "Text",             desc: "Custom paragraph" },
 ] as const;
@@ -47,6 +52,7 @@ const DEFAULT_CONFIG: NewsletterConfig = {
 export function NewsletterEditor() {
   const [config, setConfig] = useState<NewsletterConfig>(DEFAULT_CONFIG);
   const [previewHtml, setPreviewHtml] = useState<string>("");
+  const previewPaneRef = useRef<HTMLDivElement>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [showActivate, setShowActivate] = useState(false);
@@ -67,7 +73,7 @@ export function NewsletterEditor() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    fetch("/api/schedule")
+    fetch("/api/schedule", { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.schedule) {
@@ -108,7 +114,7 @@ export function NewsletterEditor() {
   useAgentContext({
     description:
       "Current newsletter config. sections = content blocks, styles = appearance, hnConfig = which HN stories, schedule = when to send.",
-    value: JSON.parse(JSON.stringify(config)),
+    value: JSON.stringify(config),
   });
 
   useAgentContext({
@@ -116,44 +122,73 @@ export function NewsletterEditor() {
     value: `You are an expert newsletter designer helping build a Hacker News digest.
 
 Tools available:
-- add_section(type, text?, content?, level?): add hn-stories | show-hn | hiring | open-source | most-commented | heading | divider | custom-text | intro | footer
-- remove_section(id): remove by id
-- update_section(id, text?, content?, level?, align?): edit a block
-- reorder_sections(ids[]): reorder all blocks
-- update_style(primaryColor?, backgroundColor?, textColor?, headerStyle?, fontFamily?): change look
+- add_section(type, ...params): add a content section
+- remove_section(id): remove a section by its id
+- update_section(id, props): edit an existing section
+- reorder_sections(ids[]): reorder all sections by providing new id order
+- update_style(primaryColor?, backgroundColor?, textColor?, headerStyle?, fontFamily?): change styling
 - set_hn_config(category?, count?): topstories | beststories | newstories | askstories | showstories, count 1-20
-- update_newsletter_title(title): rename
+- update_newsletter_title(title): rename the newsletter
 - set_schedule(frequency?, time?): daily | weekly | monthly, time HH:MM UTC
-- add_recipient(email): add a recipient
+- add_recipient(email): add an email recipient
 
-Current: "${config.title}" · ${config.sections.length} sections · ${config.hnConfig.count} ${config.hnConfig.category} · ${config.schedule.frequency}
-Section ids: ${config.sections.map((s) => `${s.id}(${s.type})`).join(", ")}
+Section types for add_section:
+- hn-stories: top HN stories (uses hnConfig category and count)
+- show-hn: Show HN projects
+- most-commented: stories with most comments
+- trending: combined upvotes + comments×2 score
+- ask-hn: top Ask HN questions
+- hiring: Who's Hiring thread
+- open-source: GitHub projects from Show HN
+- topic(query, hours?, count?): Algolia search by keyword. hours=24|48|168. Example: "AI news this week" → query="AI", hours=168
+- recent-gems(hours?, minPoints?, count?): recent stories above a points threshold. hours=24|48|168, minPoints default 50
+- high-signal(minPoints?, count?): high-points stories sorted by score. minPoints default 200
+- heading(text, level?): a section heading
+- divider: horizontal separator
+- custom-text(content): custom paragraph
+- intro(content): introductory text
+- footer(content): footer text
 
-Rules:
-1. When the user asks to remove a section type that appears multiple times (e.g. two hn-stories), always remove the last one in the list unless they specify otherwise.
-2. Custom sections with custom scoring logic (e.g. "trending by upvotes + comments combined") are NOT supported — the template only renders fixed section types. Explain this if asked and suggest the closest available type instead.
-3. When moving a section "to the top", place it just below any intro/heading sections — never above them. Intro and heading sections always stay at the top unless the user explicitly asks to move them.
-4. Be concise and proactive. When user says "dark theme" → update headerStyle to "dark" + set backgroundColor to a dark color. Always confirm what you changed.`,
+Current newsletter: "${config.title}" · ${config.sections.length} sections · ${config.hnConfig.count} ${config.hnConfig.category} · ${config.schedule.frequency}
+Existing section ids: ${config.sections.map((s) => `${s.id}(${s.type}${s.props.query ? `:${s.props.query}` : ""})`).join(", ")}
+
+CRITICAL RULES — follow exactly:
+1. NEVER call remove_section unless the user explicitly uses the word "remove", "delete", or "get rid of". Adding a new section never requires removing an existing one.
+2. Call add_section EXACTLY ONCE per user request. Do not call it multiple times for the same request.
+3. After completing the requested tool calls, stop immediately. Do not make additional tool calls.
+4. When moving a section "to the top", use reorder_sections — place it just below any intro/heading.
+5. For topic sections: infer query and hours from natural language. "AI news this week" → query="AI", hours=168. "security today" → query="security", hours=24.
+6. Be concise. Confirm what you changed in one short sentence.`,
   });
 
   useFrontendTool(
     {
       name: "add_section",
-      description: "Add a content block. Types: hn-stories, heading, divider, custom-text, intro, footer.",
+      description: "Add a content section. Types: hn-stories, show-hn, hiring, open-source, most-commented, trending, ask-hn, topic (needs query+hours), recent-gems (needs hours+minPoints), high-signal (needs minPoints), heading, divider, custom-text, intro, footer.",
       parameters: z.object({
-        type: z.enum(["hn-stories", "show-hn", "hiring", "open-source", "most-commented", "heading", "divider", "custom-text", "intro", "footer"]),
+        type: z.enum(["hn-stories", "show-hn", "hiring", "open-source", "most-commented", "trending", "ask-hn", "topic", "recent-gems", "high-signal", "heading", "divider", "custom-text", "intro", "footer"]),
         text: z.string().optional(),
         content: z.string().optional(),
         level: z.number().min(1).max(3).optional(),
-        count: z.number().min(1).max(20).optional().describe("Number of items to show in this section"),
+        count: z.number().min(1).max(20).optional(),
+        query: z.string().optional().describe("For topic sections: the search keyword (e.g. 'AI', 'Rust', 'infrastructure')"),
+        hours: z.number().optional().describe("Time window in hours: 24, 48, or 168 (week). For topic and recent-gems sections."),
+        minPoints: z.number().optional().describe("Minimum points threshold. For recent-gems and high-signal sections."),
       }),
-      handler: async ({ type, text, content, level, count }) => {
+      handler: async ({ type, text, content, level, count, query, hours, minPoints }) => {
         const section: NewsletterSection = {
           id: `${type}-${Date.now()}`,
           type: type as SectionType,
-          props: { text, content, level, count },
+          props: { text, content, level, count, query, hours, minPoints },
         };
-        setConfig((prev) => ({ ...prev, sections: [...prev.sections, section] }));
+        setConfig((prev) => {
+          // Insert before footer/divider-at-end so new sections don't go after the footer
+          const sections = [...prev.sections];
+          const footerIdx = sections.findLastIndex(s => s.type === "footer");
+          if (footerIdx !== -1) sections.splice(footerIdx, 0, section);
+          else sections.push(section);
+          return { ...prev, sections };
+        });
         return `Added ${type} section`;
       },
     },
@@ -176,13 +211,17 @@ Rules:
   useFrontendTool(
     {
       name: "update_section",
-      description: "Edit an existing section's content.",
+      description: "Edit an existing section's properties.",
       parameters: z.object({
         id: z.string(),
         text: z.string().optional(),
         content: z.string().optional(),
         level: z.number().min(1).max(3).optional(),
         align: z.enum(["left", "center", "right"]).optional(),
+        count: z.number().min(1).max(20).optional(),
+        query: z.string().optional(),
+        hours: z.number().optional(),
+        minPoints: z.number().optional(),
       }),
       handler: async ({ id, ...props }) => {
         setConfig((prev) => ({
@@ -303,7 +342,12 @@ Rules:
         body: JSON.stringify({ config }),
       });
       const data = await res.json();
-      if (data.html) setPreviewHtml(data.html);
+      if (data.html) {
+        setPreviewHtml(data.html);
+        requestAnimationFrame(() => {
+          if (previewPaneRef.current) previewPaneRef.current.scrollTop = previewPaneRef.current.scrollHeight;
+        });
+      }
     } catch {
     } finally {
       setPreviewLoading(false);
@@ -315,6 +359,7 @@ Rules:
     debounceRef.current = setTimeout(refreshPreview, 500);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [config, refreshPreview]);
+
 
   return (
     <div className="flex flex-col h-screen bg-[#f8f7f4] overflow-hidden">
@@ -333,7 +378,6 @@ Rules:
             <span className="text-sm text-[#bbb]">Rendering…</span>
           )}
 
-          {/* Sections popover */}
           {mounted && <div className="relative">
             <button
               onClick={() => setPaletteOpen((v) => !v)}
@@ -463,7 +507,7 @@ Rules:
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto py-6 px-4">
+          <div ref={previewPaneRef} className="flex-1 overflow-y-auto py-6 px-4">
             {previewHtml ? (
               <div className="bg-white rounded-xl shadow-sm border border-[#e8e6e0] overflow-hidden">
                 <iframe
