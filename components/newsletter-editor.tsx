@@ -143,6 +143,8 @@ Section types for add_section:
 - topic(query, hours?, count?): Algolia search by keyword. hours=24|48|168. Example: "AI news this week" → query="AI", hours=168
 - recent-gems(hours?, minPoints?, count?): recent stories above a points threshold. hours=24|48|168, minPoints default 50
 - high-signal(minPoints?, count?): high-points stories sorted by score. minPoints default 200
+
+IMPORTANT: Do NOT pass count unless the user explicitly mentions a number. Omit it and let the system use its default (5 for most sections).
 - heading(text, level?): a section heading
 - divider: horizontal separator
 - custom-text(content): custom paragraph
@@ -179,7 +181,15 @@ CRITICAL RULES — follow exactly:
         const section: NewsletterSection = {
           id: `${type}-${Date.now()}`,
           type: type as SectionType,
-          props: { text, content, level, count, query, hours, minPoints },
+          props: {
+            ...(text !== undefined && { text }),
+            ...(content !== undefined && { content }),
+            ...(level !== undefined && { level }),
+            ...(count !== undefined && { count }),
+            ...(query !== undefined && { query }),
+            ...(hours !== undefined && { hours }),
+            ...(minPoints !== undefined && { minPoints }),
+          },
         };
         setConfig((prev) => {
           // Insert before footer/divider-at-end so new sections don't go after the footer

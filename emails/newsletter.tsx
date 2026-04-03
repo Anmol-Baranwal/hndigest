@@ -279,6 +279,11 @@ function MostCommentedSection({ stories, styles }: { stories: HNStory[]; styles:
           </Row>
         </Section>
       ))}
+      <Section style={{ padding: "8px 0 4px" }}>
+        <Link href="https://news.ycombinator.com" style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}>
+          View more on Hacker News →
+        </Link>
+      </Section>
     </Section>
   );
 }
@@ -413,6 +418,11 @@ function AskHNSection({ stories, styles }: { stories: HNStory[]; styles: Newslet
           </Text>
         </Section>
       ))}
+      <Section style={{ padding: "8px 0 4px" }}>
+        <Link href="https://news.ycombinator.com/ask" style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}>
+          View more Ask HN →
+        </Link>
+      </Section>
     </Section>
   );
 }
@@ -472,6 +482,11 @@ function RecentGemsSection({ section, stories, styles }: { section: NewsletterSe
           </Column>
         </Row>
       ))}
+      <Section style={{ padding: "8px 0 4px" }}>
+        <Link href="https://news.ycombinator.com/newest" style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}>
+          View more recent stories →
+        </Link>
+      </Section>
     </Section>
   );
 }
@@ -511,6 +526,11 @@ function HighSignalSection({ section, stories, styles }: { section: NewsletterSe
           </Row>
         </Section>
       ))}
+      <Section style={{ padding: "8px 0 4px" }}>
+        <Link href="https://news.ycombinator.com/best" style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}>
+          View best on Hacker News →
+        </Link>
+      </Section>
     </Section>
   );
 }
