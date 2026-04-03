@@ -3,7 +3,8 @@ import { Resend } from "resend";
 import { render } from "@react-email/components";
 import { getAllActiveSchedules, updateSchedule } from "../../../lib/db";
 import { decrypt } from "../../../lib/encrypt";
-import { fetchNewsletterData } from "../../../lib/hn";
+import { generateUnsubscribeToken } from "../../../lib/auth";
+import { fetchNewsletterData } from "../../../lib/hn/index";
 import NewsletterEmail from "../../../emails/newsletter";
 
 export async function GET(req: NextRequest) {
@@ -24,7 +25,10 @@ export async function GET(req: NextRequest) {
       }
 
       const data = await fetchNewsletterData(record);
-      const html = await render(<NewsletterEmail config={record} data={data} />);
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://hndigest.vercel.app";
+      const unsubscribeToken = await generateUnsubscribeToken(record.ownerEmail);
+      const unsubscribeUrl = `${baseUrl}/api/unsubscribe?token=${unsubscribeToken}`;
+      const html = await render(<NewsletterEmail config={record} data={data} unsubscribeUrl={unsubscribeUrl} />);
 
       const resendKey = decrypt(record.encryptedResendKey);
       const resend = new Resend(resendKey);

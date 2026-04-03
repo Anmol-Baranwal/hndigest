@@ -52,6 +52,23 @@ export async function getSessionFromCookies(): Promise<{ email: string } | null>
   return verifySessionToken(token);
 }
 
+export async function generateUnsubscribeToken(ownerEmail: string): Promise<string> {
+  return new SignJWT({ ownerEmail, type: "unsubscribe" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .sign(getSecret());
+}
+
+export async function verifyUnsubscribeToken(token: string): Promise<{ ownerEmail: string } | null> {
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    if (payload.type !== "unsubscribe") return null;
+    return { ownerEmail: payload.ownerEmail as string };
+  } catch {
+    return null;
+  }
+}
+
 export function setSessionCookie(response: NextResponse, token: string) {
   response.cookies.set("session", token, {
     httpOnly: true,

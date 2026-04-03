@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { render } from "@react-email/components";
 import NewsletterEmail from "../../../emails/newsletter";
-import { fetchNewsletterData } from "../../../lib/hn";
+import { fetchNewsletterData } from "../../../lib/hn/index";
 import { NewsletterConfig } from "../../../lib/types";
 
 export async function POST(req: NextRequest) {

@@ -1,54 +1,25 @@
+import { HNConfig, HiringEntry, NewsletterConfig, NewsletterData } from "../types";
+import { fetchItemIds, fetchItemsBatch, fetchStories } from "./firebase";
 import {
-  HNConfig,
-  HNStory,
-  HiringEntry,
-  NewsletterConfig,
-  NewsletterData,
-} from "./types";
+  fetchTopicStories,
+  fetchAskHN,
+  fetchRecentGems,
+  fetchHighSignal,
+  findHiringThreadId,
+} from "./algolia";
 
-const HN_BASE = "https://hacker-news.firebaseio.com/v0";
-const ALGOLIA = "https://hn.algolia.com/api/v1";
+export { fetchStories, fetchTopicStories, fetchAskHN, fetchRecentGems, fetchHighSignal };
 
-async function fetchItemIds(category: string): Promise<number[]> {
-  const res = await fetch(`${HN_BASE}/${category}.json`, {
-    next: { revalidate: 600 },
-  });
-  return res.json();
+export async function fetchStoriesByConfig(config: HNConfig) {
+  return fetchStories(config.category, config.count);
 }
 
-async function fetchItem(id: number): Promise<HNStory | null> {
-  try {
-    const res = await fetch(`${HN_BASE}/item/${id}.json`);
-    const item = await res.json();
-    return item?.title ? item : null;
-  } catch {
-    return null;
-  }
+export async function fetchShowHNStories(count = 11) {
+  return fetchStories("showstories", count);
 }
 
-async function fetchItemsBatch(ids: number[], count: number): Promise<HNStory[]> {
-  const results = await Promise.allSettled(
-    ids.slice(0, count * 2).map(fetchItem)
-  );
-  return results
-    .filter((r): r is PromiseFulfilledResult<HNStory> => r.status === "fulfilled" && r.value !== null)
-    .map((r) => r.value)
-    .slice(0, count);
-}
-
-export async function fetchStories(config: HNConfig): Promise<HNStory[]> {
-  const ids = await fetchItemIds(config.category);
-  return fetchItemsBatch(ids, config.count);
-}
-
-export async function fetchShowHNStories(count = 11): Promise<HNStory[]> {
-  const ids = await fetchItemIds("showstories");
-  return fetchItemsBatch(ids, count);
-}
-
-export async function fetchMostCommented(count = 5): Promise<HNStory[]> {
+export async function fetchMostCommented(count = 5) {
   const ids = await fetchItemIds("topstories");
-  // Fetch more to sort by comment count
   const stories = await fetchItemsBatch(ids, 50);
   return stories
     .filter((s) => s.descendants > 0)
@@ -56,21 +27,23 @@ export async function fetchMostCommented(count = 5): Promise<HNStory[]> {
     .slice(0, count);
 }
 
-export async function fetchOpenSourceProjects(count = 5): Promise<HNStory[]> {
-  const ids = await fetchItemIds("showstories");
-  const stories = await fetchItemsBatch(ids, 60);
+export async function fetchOpenSourceProjects(count = 5) {
+  const stories = await fetchStories("showstories", 60);
+  return stories.filter((s) => s.url?.includes("github.com")).slice(0, count);
+}
+
+export async function fetchTrending(count = 5) {
+  const ids = await fetchItemIds("topstories");
+  const stories = await fetchItemsBatch(ids, 80);
   return stories
-    .filter((s) => s.url?.includes("github.com"))
+    .map((s) => ({ ...s, _score: s.score + (s.descendants ?? 0) * 2 }))
+    .sort((a, b) => (b as any)._score - (a as any)._score)
     .slice(0, count);
 }
 
 export async function fetchHiringCompanies(count = 4): Promise<HiringEntry[]> {
-  const searchRes = await fetch(
-    `${ALGOLIA}/search?query=Ask%20HN%3A%20Who%20is%20Hiring%3F&tags=story,author_whoishiring&hitsPerPage=1`,
-    { next: { revalidate: 3600 } }
-  );
-  const searchData = await searchRes.json();
-  const threadId = searchData?.hits?.[0]?.objectID;
+  const HN_BASE = "https://hacker-news.firebaseio.com/v0";
+  const threadId = await findHiringThreadId();
   if (!threadId) return [];
 
   const threadRes = await fetch(`${HN_BASE}/item/${threadId}.json`);
@@ -90,23 +63,15 @@ export async function fetchHiringCompanies(count = 4): Promise<HiringEntry[]> {
     const comment = result.value;
     if (!comment?.text || comment.deleted || comment.dead) continue;
 
-    // Parse "Company | Role | Location" from HTML text
     const plainText = comment.text
       .replace(/<[^>]+>/g, " ")
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .replace(/&#x27;/g, "'")
-      .replace(/&#x2F;/g, "/")
-      .replace(/&#x60;/g, "`")
-      .replace(/&#x3D;/g, "=")
-      .replace(/&nbsp;/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+      .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&#x2F;/g, "/")
+      .replace(/&#x60;/g, "`").replace(/&#x3D;/g, "=").replace(/&nbsp;/g, " ")
+      .replace(/\s+/g, " ").trim();
+
     const firstLine = plainText.split("\n")[0].slice(0, 200);
     const parts = firstLine.split(/\s*\|\s*/);
-
     const company = parts[0]?.trim().slice(0, 60) || "Company";
     const role = parts[1]?.trim().slice(0, 60);
     const location = parts[2]?.trim().slice(0, 60);
@@ -135,14 +100,15 @@ export async function fetchNewsletterData(config: NewsletterConfig): Promise<New
 
   for (const section of config.sections) {
     const count = section.props.count;
+
     switch (section.type) {
       case "hn-stories":
         if (!data.topStories)
-          fetches.push(fetchStories(config.hnConfig).then((s) => { data.topStories = s; }));
+          fetches.push(fetchStoriesByConfig(config.hnConfig).then((s) => { data.topStories = s; }));
         break;
       case "show-hn":
         if (!data.showHNStories)
-          fetches.push(fetchShowHNStories(count ?? 11).then((s) => { data.showHNStories = s; }));
+          fetches.push(fetchShowHNStories(count ?? 5).then((s) => { data.showHNStories = s; }));
         break;
       case "hiring":
         if (!data.hiringEntries)
@@ -155,6 +121,34 @@ export async function fetchNewsletterData(config: NewsletterConfig): Promise<New
       case "most-commented":
         if (!data.mostCommentedStories)
           fetches.push(fetchMostCommented(count ?? 5).then((s) => { data.mostCommentedStories = s; }));
+        break;
+      case "trending":
+        if (!data.trendingStories)
+          fetches.push(fetchTrending(count ?? 5).then((s) => { data.trendingStories = s; }));
+        break;
+      case "ask-hn":
+        if (!data.askHNStories)
+          fetches.push(fetchAskHN(count ?? 5).then((s) => { data.askHNStories = s; }));
+        break;
+
+      // Dynamic sections — fetched per section ID since each may have different params
+      case "topic":
+        fetches.push(
+          fetchTopicStories(section.props.query ?? "technology", count ?? 5, section.props.hours ?? 24)
+            .then((s) => { data.sectionData = { ...data.sectionData, [section.id]: s }; })
+        );
+        break;
+      case "recent-gems":
+        fetches.push(
+          fetchRecentGems(count ?? 5, section.props.hours ?? 24, section.props.minPoints ?? 50)
+            .then((s) => { data.sectionData = { ...data.sectionData, [section.id]: s }; })
+        );
+        break;
+      case "high-signal":
+        fetches.push(
+          fetchHighSignal(count ?? 5, section.props.minPoints ?? 200)
+            .then((s) => { data.sectionData = { ...data.sectionData, [section.id]: s }; })
+        );
         break;
     }
   }

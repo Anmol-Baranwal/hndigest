@@ -4,6 +4,11 @@ export type SectionType =
   | "hiring"          // Who is Hiring (Ask HN monthly thread)
   | "open-source"     // Open source projects (Show HN with GitHub)
   | "most-commented"  // Most commented stories
+  | "trending"        // Combined score: upvotes + comments×2
+  | "ask-hn"          // Top Ask HN posts
+  | "topic"           // Algolia: query + time window (dynamic)
+  | "recent-gems"     // Algolia: recent stories with min points (dynamic)
+  | "high-signal"     // Algolia: high points, low comments (dynamic)
   | "heading"
   | "divider"
   | "custom-text"
@@ -18,7 +23,10 @@ export interface NewsletterSection {
     content?: string;
     level?: number;
     align?: "left" | "center" | "right";
-    count?: number; // override item count for this section
+    count?: number;       // number of items to show
+    query?: string;       // topic: Algolia search query
+    hours?: number;       // topic/recent-gems: time window in hours (24, 48, 168)
+    minPoints?: number;   // recent-gems/high-signal: minimum points threshold
   };
 }
 
@@ -102,4 +110,7 @@ export interface NewsletterData {
   hiringEntries?: HiringEntry[];
   openSourceProjects?: HNStory[];
   mostCommentedStories?: HNStory[];
+  trendingStories?: HNStory[];
+  askHNStories?: HNStory[];
+  sectionData?: Record<string, HNStory[]>; // dynamic sections keyed by section.id
 }

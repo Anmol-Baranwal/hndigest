@@ -25,9 +25,10 @@ import {
 interface NewsletterEmailProps {
   config: NewsletterConfig;
   data: NewsletterData;
+  unsubscribeUrl?: string;
 }
 
-export default function NewsletterEmail({ config, data }: NewsletterEmailProps) {
+export default function NewsletterEmail({ config, data, unsubscribeUrl }: NewsletterEmailProps) {
   const { sections, styles, title } = config;
 
   const ff =
@@ -44,13 +45,12 @@ export default function NewsletterEmail({ config, data }: NewsletterEmailProps) 
       <Body style={{ backgroundColor: styles.backgroundColor, fontFamily: ff, margin: 0, padding: 0 }}>
         <Container style={{ maxWidth: "600px", margin: "0 auto", padding: "0 0 40px" }}>
           {sections.map((s) => renderSection(s, data, styles, title))}
+          <EmailFooter unsubscribeUrl={unsubscribeUrl} />
         </Container>
       </Body>
     </Html>
   );
 }
-
-// ── Section renderers ─────────────────────────────────────────────────────
 
 function renderSection(
   section: NewsletterSection,
@@ -80,13 +80,21 @@ function renderSection(
       return <HiringSection key={section.id} entries={data.hiringEntries ?? []} styles={styles} />;
     case "open-source":
       return <OpenSourceSection key={section.id} projects={data.openSourceProjects ?? []} styles={styles} />;
+    case "trending":
+      return <TrendingSection key={section.id} stories={data.trendingStories ?? []} styles={styles} />;
+    case "ask-hn":
+      return <AskHNSection key={section.id} stories={data.askHNStories ?? []} styles={styles} />;
+    case "topic":
+      return <TopicSection key={section.id} section={section} stories={data.sectionData?.[section.id] ?? []} styles={styles} />;
+    case "recent-gems":
+      return <RecentGemsSection key={section.id} section={section} stories={data.sectionData?.[section.id] ?? []} styles={styles} />;
+    case "high-signal":
+      return <HighSignalSection key={section.id} section={section} stories={data.sectionData?.[section.id] ?? []} styles={styles} />;
 
     default:
       return null;
   }
 }
-
-// ── Intro / Header ────────────────────────────────────────────────────────
 
 function IntroSection({
   section,
@@ -115,8 +123,6 @@ function IntroSection({
   );
 }
 
-// ── Heading ───────────────────────────────────────────────────────────────
-
 function HeadingSection({ section, styles }: { section: NewsletterSection; styles: NewsletterStyles }) {
   const sizes: Record<number, string> = { 1: "26px", 2: "20px", 3: "16px" };
   const level = section.props.level ?? 2;
@@ -138,8 +144,6 @@ function HeadingSection({ section, styles }: { section: NewsletterSection; style
   );
 }
 
-// ── Custom text ───────────────────────────────────────────────────────────
-
 function CustomTextSection({ section, styles }: { section: NewsletterSection; styles: NewsletterStyles }) {
   return (
     <Section style={{ padding: "8px 24px" }}>
@@ -150,11 +154,9 @@ function CustomTextSection({ section, styles }: { section: NewsletterSection; st
   );
 }
 
-// ── Footer ────────────────────────────────────────────────────────────────
-
 function FooterSection({ section }: { section: NewsletterSection }) {
   return (
-    <Section style={{ borderTop: "1px solid #ebebeb", padding: "24px 24px 0", marginTop: "16px" }}>
+    <Section style={{ padding: "8px 24px 0" }}>
       <Text style={{ color: "#aaa", fontSize: "12px", textAlign: "center", margin: "0", lineHeight: "1.6" }}>
         {section.props.content ?? "You're receiving this because you set up HN Digest."}
       </Text>
@@ -162,7 +164,26 @@ function FooterSection({ section }: { section: NewsletterSection }) {
   );
 }
 
-// ── Top Stories / Show HN ─────────────────────────────────────────────────
+function EmailFooter({ unsubscribeUrl }: { unsubscribeUrl?: string }) {
+  return (
+    <Section style={{ borderTop: "1px solid #ebebeb", padding: "20px 24px 0", marginTop: "16px" }}>
+      <Text style={{ color: "#bbb", fontSize: "11px", textAlign: "center", margin: "0 0 6px", lineHeight: "1.6" }}>
+        Built with HN Digest ·{" "}
+        <Link href="https://github.com/Anmol-Baranwal/hndigest" style={{ color: "#bbb" }}>
+          ⭐ Star on GitHub
+        </Link>
+        {unsubscribeUrl && (
+          <>
+            {" · "}
+            <Link href={unsubscribeUrl} style={{ color: "#bbb" }}>
+              Unsubscribe
+            </Link>
+          </>
+        )}
+      </Text>
+    </Section>
+  );
+}
 
 function StoriesSection({
   stories,
@@ -220,8 +241,6 @@ function StoriesSection({
   );
 }
 
-// ── Most Commented ────────────────────────────────────────────────────────
-
 function MostCommentedSection({ stories, styles }: { stories: HNStory[]; styles: NewsletterStyles }) {
   if (stories.length === 0) return null;
 
@@ -264,8 +283,6 @@ function MostCommentedSection({ stories, styles }: { stories: HNStory[]; styles:
     </Section>
   );
 }
-
-// ── Who is Hiring ─────────────────────────────────────────────────────────
 
 function HiringSection({ entries, styles }: { entries: HiringEntry[]; styles: NewsletterStyles }) {
   if (entries.length === 0) return null;
@@ -314,8 +331,6 @@ function HiringSection({ entries, styles }: { entries: HiringEntry[]; styles: Ne
     </Section>
   );
 }
-
-// ── Open Source Projects ──────────────────────────────────────────────────
 
 function OpenSourceSection({ projects, styles }: { projects: HNStory[]; styles: NewsletterStyles }) {
   if (projects.length === 0) return null;
@@ -378,7 +393,165 @@ function OpenSourceSection({ projects, styles }: { projects: HNStory[]; styles: 
   );
 }
 
-// ── Shared ────────────────────────────────────────────────────────────────
+function AskHNSection({ stories, styles }: { stories: HNStory[]; styles: NewsletterStyles }) {
+  if (stories.length === 0) return null;
+  return (
+    <Section style={{ padding: "20px 24px 8px" }}>
+      <SectionLabel text="Ask HN" color={styles.primaryColor} />
+      {stories.map((story, i) => (
+        <Section
+          key={story.id}
+          style={{ backgroundColor: i % 2 === 0 ? "#fafafa" : "#fff", borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}
+        >
+          <Link
+            href={`https://news.ycombinator.com/item?id=${story.id}`}
+            style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
+          >
+            {story.title}
+          </Link>
+          <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0" }}>
+            {story.score} pts · {story.descendants ?? 0} comments · by {story.by}
+          </Text>
+        </Section>
+      ))}
+    </Section>
+  );
+}
+
+function TopicSection({ section, stories, styles }: { section: NewsletterSection; stories: HNStory[]; styles: NewsletterStyles }) {
+  if (stories.length === 0) return null;
+  const label = section.props.query ?? "Topic";
+  const window = section.props.hours === 168 ? "this week" : section.props.hours === 48 ? "last 48h" : "last 24h";
+  return (
+    <Section style={{ padding: "20px 24px 8px" }}>
+      <SectionLabel text={`${label} · ${window}`} color={styles.primaryColor} />
+      {stories.map((story, i) => (
+        <Section
+          key={story.id}
+          style={{ backgroundColor: i % 2 === 0 ? "#fafafa" : "#fff", borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}
+        >
+          <Link
+            href={story.url ?? `https://news.ycombinator.com/item?id=${story.id}`}
+            style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
+          >
+            {story.title}
+          </Link>
+          <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0" }}>
+            {story.score} pts · {story.descendants ?? 0} comments · by {story.by}
+          </Text>
+        </Section>
+      ))}
+    </Section>
+  );
+}
+
+function RecentGemsSection({ section, stories, styles }: { section: NewsletterSection; stories: HNStory[]; styles: NewsletterStyles }) {
+  if (stories.length === 0) return null;
+  const window = section.props.hours === 48 ? "last 48h" : "last 24h";
+  return (
+    <Section style={{ padding: "20px 24px 8px" }}>
+      <SectionLabel text={`Recent Gems · ${window}`} color={styles.primaryColor} />
+      {stories.map((story, i) => (
+        <Row key={story.id} style={{ marginBottom: "2px" }}>
+          <Column style={{ width: "36px", verticalAlign: "top", paddingTop: "14px" }}>
+            <Text style={{ color: styles.primaryColor, fontWeight: "700", fontSize: "16px", margin: "0", lineHeight: "1" }}>
+              {i + 1}
+            </Text>
+          </Column>
+          <Column style={{ verticalAlign: "top" }}>
+            <Section style={{ backgroundColor: i % 2 === 0 ? "#fafafa" : "#fff", borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}>
+              <Link
+                href={story.url ?? `https://news.ycombinator.com/item?id=${story.id}`}
+                style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
+              >
+                {story.title}
+              </Link>
+              <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0" }}>
+                {story.score} pts · {story.descendants ?? 0} comments · by {story.by}
+              </Text>
+            </Section>
+          </Column>
+        </Row>
+      ))}
+    </Section>
+  );
+}
+
+function HighSignalSection({ section, stories, styles }: { section: NewsletterSection; stories: HNStory[]; styles: NewsletterStyles }) {
+  if (stories.length === 0) return null;
+  const minPts = section.props.minPoints ?? 200;
+
+  return (
+    <Section style={{ padding: "20px 24px 8px" }}>
+      <SectionLabel text={`High Signal · ${minPts}+ pts`} color={styles.primaryColor} />
+      {stories.map((story, i) => (
+        <Section
+          key={story.id}
+          style={{ backgroundColor: i % 2 === 0 ? "#fafafa" : "#fff", borderRadius: "6px", padding: "12px 14px", marginBottom: "4px", borderLeft: `3px solid ${styles.primaryColor}` }}
+        >
+          <Link
+            href={story.url ?? `https://news.ycombinator.com/item?id=${story.id}`}
+            style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
+          >
+            {story.title}
+          </Link>
+          <Row style={{ marginTop: "6px" }}>
+            <Column>
+              <Text style={{ color: "#999", fontSize: "12px", margin: "0" }}>
+                {story.score} pts · by {story.by}
+              </Text>
+            </Column>
+            <Column style={{ textAlign: "right" }}>
+              <Link
+                href={`https://news.ycombinator.com/item?id=${story.id}`}
+                style={{ color: styles.primaryColor, fontSize: "12px" }}
+              >
+                {story.descendants ?? 0} comments →
+              </Link>
+            </Column>
+          </Row>
+        </Section>
+      ))}
+    </Section>
+  );
+}
+
+function TrendingSection({ stories, styles }: { stories: HNStory[]; styles: NewsletterStyles }) {
+  if (stories.length === 0) return null;
+
+  return (
+    <Section style={{ padding: "20px 24px 8px" }}>
+      <SectionLabel text="Trending" color={styles.primaryColor} />
+      {stories.map((story, i) => (
+        <Row key={story.id} style={{ marginBottom: "2px" }}>
+          <Column style={{ width: "36px", verticalAlign: "top", paddingTop: "14px" }}>
+            <Text style={{ color: styles.primaryColor, fontWeight: "700", fontSize: "16px", margin: "0", lineHeight: "1" }}>
+              {i + 1}
+            </Text>
+          </Column>
+          <Column style={{ verticalAlign: "top" }}>
+            <Section style={{ backgroundColor: i % 2 === 0 ? "#fafafa" : "#fff", borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}>
+              <Link
+                href={story.url ?? `https://news.ycombinator.com/item?id=${story.id}`}
+                style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
+              >
+                {story.title}
+              </Link>
+              <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0", lineHeight: "1" }}>
+                {story.score} pts · {story.descendants ?? 0} comments · by {story.by}
+              </Text>
+            </Section>
+          </Column>
+        </Row>
+      ))}
+      <Section style={{ padding: "8px 0 4px" }}>
+        <Link href="https://news.ycombinator.com" style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}>
+          View more on Hacker News →
+        </Link>
+      </Section>
+    </Section>
+  );
+}
 
 function SectionLabel({ text, color }: { text: string; color: string }) {
   return (
