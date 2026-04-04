@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HN Digest
 
-## Getting Started
+Build and receive your own Hacker News digest, delivered to your inbox on a schedule you choose.
 
-First, run the development server:
+Describe what you want (top stories, AI news, recent gems, who's hiring) and the AI builds the email. Set it once, get it daily, weekly, or monthly. Built with [CopilotKit](https://copilotkit.ai), [Resend](https://resend.com), [Neon](https://neon.tech).
+
+## What it does
+
+- **AI editor** — describe your digest in plain English. The AI adds/removes sections, changes colors and fonts, and sets your schedule.
+- **10+ section types** — top stories, topic search, Ask HN, hiring threads, recent gems, and more.
+- **Live preview** — rendered with real HN data as you edit.
+- **Scheduled delivery** — daily, weekly, or monthly. Activated via magic link, no password needed.
+- **Your own Resend key** — the digest lands in your inbox from your own Resend account. Your key is encrypted with AES-256-GCM and only decrypted at send time.
+
+## How the Resend key works
+
+When you activate your digest, you enter your own Resend API key. It is:
+
+- Encrypted with AES-256-GCM before being stored
+- Decrypted only at send time, in memory, on the server
+- Never returned to the browser or logged
+- Wiped immediately when you delete your digest
+
+The app's own Resend key is only used to send magic link login emails. You only need sending access — a key scoped to one domain is enough.
+
+## Getting started
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/Anmol-Baranwal/hndigest.git
+cd hndigest
+npm install
+```
+
+### 2. Set up environment variables
+
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Required | Description |
+|---|---|---|
+| `OPENAI_API_KEY` | Yes | Powers the CopilotKit AI agent |
+| `RESEND_API_KEY` | Yes | Sends magic link login emails |
+| `DATABASE_URL` | Yes | Neon Postgres connection string |
+| `JWT_SECRET` | Prod | Any long random string for signing session tokens |
+| `ENCRYPTION_SECRET` | Prod | 32-char key for encrypting your stored Resend key |
+| `CRON_SECRET` | Prod | Protects the `/api/cron` endpoint |
+| `NEXT_PUBLIC_BASE_URL` | Prod | Your deployed URL (used in magic link emails) |
+
+In development, `JWT_SECRET`, `ENCRYPTION_SECRET`, and `CRON_SECRET` fall back to safe dev values automatically.
+
+### 3. Run locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000), go to the editor, build your digest, and hit Activate.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploying to Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Push to GitHub and import the repo in Vercel.
+2. Add all environment variables in the Vercel dashboard.
+3. The cron job at `/api/cron` runs daily — Vercel handles this via `vercel.json`.
 
-## Learn More
+> **Note:** Vercel Hobby plan crons run at most once per day. Upgrade to Pro for more granular scheduling.
 
-To learn more about Next.js, take a look at the following resources:
+## Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Layer | Tech |
+|---|---|
+| Framework | Next.js (App Router) |
+| AI agent | CopilotKit + OpenAI |
+| Email | Resend + React Email |
+| Database | Neon (Postgres) |
+| HN data | Firebase HN API + Algolia HN API |
+| Scheduling | Vercel Cron |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## License
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
