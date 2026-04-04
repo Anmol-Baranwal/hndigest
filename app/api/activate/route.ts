@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { createSchedule } from "../../../lib/db";
+import { createSchedule, setQstashScheduleId } from "../../../lib/db";
 import { encrypt } from "../../../lib/encrypt";
 import { generateMagicToken } from "../../../lib/auth";
+import { scheduleDigest } from "../../../lib/qstash";
 import { NewsletterConfig } from "../../../lib/types";
 import { randomUUID } from "crypto";
 
@@ -21,17 +22,34 @@ export async function POST(req: NextRequest) {
 
     const now = new Date().toISOString();
     const recipients = config.recipients.length > 0 ? config.recipients : [email];
+    const scheduleId = randomUUID();
+    const scheduleConfig = { ...config.schedule, active: true };
 
     await createSchedule({
-      id: randomUUID(),
+      id: scheduleId,
       ownerEmail: email,
       encryptedResendKey: resendApiKey ? encrypt(resendApiKey) : "",
       createdAt: now,
       updatedAt: now,
       ...config,
       recipients,
-      schedule: { ...config.schedule, active: true },
+      schedule: scheduleConfig,
     });
+
+    // Create QStash schedule for exact-time delivery (non-blocking on failure)
+    if (process.env.QSTASH_TOKEN) {
+      try {
+        const qstashId = await scheduleDigest(
+          scheduleId,
+          scheduleConfig.frequency,
+          scheduleConfig.time,
+          scheduleConfig.day
+        );
+        await setQstashScheduleId(scheduleId, qstashId);
+      } catch (err) {
+        console.error("QStash schedule creation failed:", err);
+      }
+    }
 
     const token = await generateMagicToken(email);
     const baseUrl =

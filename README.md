@@ -43,13 +43,14 @@ cp .env.example .env.local
 |---|---|---|
 | `OPENAI_API_KEY` | Yes | Powers the CopilotKit AI agent |
 | `RESEND_API_KEY` | Yes | Sends magic link login emails |
-| `DATABASE_URL` | Yes | Neon Postgres connection string |
+| `POSTGRES_URL` | Yes | Neon Postgres connection string (auto-set by Neon Vercel integration) |
+| `QSTASH_TOKEN` | Yes | Upstash QStash token for per-user scheduling |
 | `JWT_SECRET` | Prod | Any long random string for signing session tokens |
 | `ENCRYPTION_SECRET` | Prod | 32-char key for encrypting your stored Resend key |
-| `CRON_SECRET` | Prod | Protects the `/api/cron` endpoint |
-| `NEXT_PUBLIC_BASE_URL` | Prod | Your deployed URL (used in magic link emails) |
+| `CRON_SECRET` | Prod | Protects the `/api/send` endpoint |
+| `NEXT_PUBLIC_BASE_URL` | Prod | Your deployed URL (used in magic links and QStash callbacks) |
 
-In development, `JWT_SECRET`, `ENCRYPTION_SECRET`, and `CRON_SECRET` fall back to safe dev values automatically.
+In development, `JWT_SECRET`, `ENCRYPTION_SECRET`, and `CRON_SECRET` fall back to safe dev values automatically. Without `QSTASH_TOKEN`, scheduling is skipped gracefully.
 
 ### 3. Run locally
 
@@ -63,9 +64,7 @@ Open [http://localhost:3000](http://localhost:3000), go to the editor, build you
 
 1. Push to GitHub and import the repo in Vercel.
 2. Add all environment variables in the Vercel dashboard.
-3. The cron job at `/api/cron` runs daily — Vercel handles this via `vercel.json`.
-
-> **Note:** Vercel Hobby plan crons run at most once per day. Upgrade to Pro for more granular scheduling.
+3. Add `QSTASH_TOKEN` from [console.upstash.com](https://console.upstash.com) → QStash. Each user activation creates a per-user QStash schedule that fires at their exact chosen time.
 
 ## Stack
 
@@ -76,7 +75,7 @@ Open [http://localhost:3000](http://localhost:3000), go to the editor, build you
 | Email | Resend + React Email |
 | Database | Neon (Postgres) |
 | HN data | Firebase HN API + Algolia HN API |
-| Scheduling | Vercel Cron |
+| Scheduling | Upstash QStash |
 
 ## License
 

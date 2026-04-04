@@ -23,10 +23,13 @@ async function ensureTables() {
       schedule JSONB,
       recipients JSONB,
       send_history JSONB,
+      qstash_schedule_id TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
+  // Migrate existing tables
+  await db`ALTER TABLE newsletters ADD COLUMN IF NOT EXISTS qstash_schedule_id TEXT`;
 }
 
 function toRecord(row: Record<string, unknown>): ScheduleRecord {
@@ -43,6 +46,7 @@ function toRecord(row: Record<string, unknown>): ScheduleRecord {
     schedule: row.schedule as ScheduleRecord["schedule"],
     recipients: (row.recipients as string[]) ?? [],
     sendHistory: (row.send_history as ScheduleRecord["sendHistory"]) ?? [],
+    qstashScheduleId: row.qstash_schedule_id as string | undefined,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -55,14 +59,14 @@ export async function createSchedule(record: ScheduleRecord): Promise<ScheduleRe
     INSERT INTO newsletters (
       id, owner_email, encrypted_resend_key, encrypted_llm_key, llm_provider,
       title, sections, styles, hn_config, schedule, recipients, send_history,
-      created_at, updated_at
+      qstash_schedule_id, created_at, updated_at
     ) VALUES (
       ${record.id}, ${record.ownerEmail}, ${record.encryptedResendKey},
       ${record.encryptedLlmKey ?? null}, ${record.llmProvider ?? null},
       ${record.title}, ${JSON.stringify(record.sections)}, ${JSON.stringify(record.styles)},
       ${JSON.stringify(record.hnConfig)}, ${JSON.stringify(record.schedule)},
       ${JSON.stringify(record.recipients)}, ${JSON.stringify(record.sendHistory ?? [])},
-      ${record.createdAt}, ${record.updatedAt}
+      ${record.qstashScheduleId ?? null}, ${record.createdAt}, ${record.updatedAt}
     )
     ON CONFLICT (owner_email) DO UPDATE SET
       encrypted_resend_key = EXCLUDED.encrypted_resend_key,
@@ -75,6 +79,7 @@ export async function createSchedule(record: ScheduleRecord): Promise<ScheduleRe
       schedule = EXCLUDED.schedule,
       recipients = EXCLUDED.recipients,
       send_history = EXCLUDED.send_history,
+      qstash_schedule_id = EXCLUDED.qstash_schedule_id,
       updated_at = EXCLUDED.updated_at
   `;
   return record;
@@ -113,6 +118,7 @@ export async function updateSchedule(
       schedule = COALESCE(${updates.schedule ? JSON.stringify(updates.schedule) : null}::jsonb, schedule),
       recipients = COALESCE(${updates.recipients ? JSON.stringify(updates.recipients) : null}::jsonb, recipients),
       send_history = COALESCE(${updates.sendHistory ? JSON.stringify(updates.sendHistory) : null}::jsonb, send_history),
+      qstash_schedule_id = COALESCE(${updates.qstashScheduleId ?? null}, qstash_schedule_id),
       updated_at = ${now}
     WHERE id = ${id}
     RETURNING *
@@ -125,6 +131,12 @@ export async function deleteSchedule(id: string): Promise<boolean> {
   const db = sql();
   const rows = await db`DELETE FROM newsletters WHERE id = ${id} RETURNING id`;
   return rows.length > 0;
+}
+
+export async function setQstashScheduleId(id: string, qstashScheduleId: string | null): Promise<void> {
+  await ensureTables();
+  const db = sql();
+  await db`UPDATE newsletters SET qstash_schedule_id = ${qstashScheduleId}, updated_at = NOW() WHERE id = ${id}`;
 }
 
 export async function getAllActiveSchedules(): Promise<ScheduleRecord[]> {

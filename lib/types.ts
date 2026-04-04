@@ -78,6 +78,7 @@ export interface ScheduleRecord extends NewsletterConfig {
   encryptedResendKey: string;
   encryptedLlmKey?: string;
   llmProvider?: "openai" | "anthropic" | "gemini";
+  qstashScheduleId?: string;
   sendHistory?: SendRecord[];
   createdAt: string;
   updatedAt: string;
