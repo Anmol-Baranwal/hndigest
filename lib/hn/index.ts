@@ -99,7 +99,7 @@ export async function fetchNewsletterData(config: NewsletterConfig): Promise<New
   const fetches: Promise<void>[] = [];
 
   for (const section of config.sections) {
-    const count = section.props.count;
+    const count = section.props.count && section.props.count > 0 ? section.props.count : undefined;
 
     switch (section.type) {
       case "hn-stories":

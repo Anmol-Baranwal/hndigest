@@ -144,7 +144,7 @@ Section types for add_section:
 - recent-gems(hours?, minPoints?, count?): recent stories above a points threshold. hours=24|48|168, minPoints default 50
 - high-signal(minPoints?, count?): high-points stories sorted by score. minPoints default 200
 
-IMPORTANT: Do NOT pass count unless the user explicitly mentions a number. Omit it and let the system use its default (5 for most sections).
+IMPORTANT: Do NOT pass count unless the user explicitly mentions a number. If count is not mentioned, omit it entirely — never pass 0, 1, or any value. The system defaults to 5 stories per section.
 - heading(text, level?): a section heading
 - divider: horizontal separator
 - custom-text(content): custom paragraph
@@ -185,7 +185,7 @@ CRITICAL RULES — follow exactly:
             ...(text !== undefined && { text }),
             ...(content !== undefined && { content }),
             ...(level !== undefined && { level }),
-            ...(count !== undefined && { count }),
+            ...(count !== undefined && count > 0 && { count }),
             ...(query !== undefined && { query }),
             ...(hours !== undefined && { hours }),
             ...(minPoints !== undefined && { minPoints }),

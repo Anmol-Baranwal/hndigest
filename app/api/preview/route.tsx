@@ -8,6 +8,7 @@ export async function POST(req: NextRequest) {
   try {
     const { config }: { config: NewsletterConfig } = await req.json();
     const data = await fetchNewsletterData(config);
+    // eslint-disable-next-line react-hooks/error-boundaries
     const html = await render(<NewsletterEmail config={config} data={data} />);
     return NextResponse.json({ html });
   } catch (err) {
