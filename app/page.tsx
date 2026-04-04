@@ -49,9 +49,7 @@ export default function LandingPage() {
             >
               Build your newsletter →
             </Link>
-            <span className="text-sm text-[#aaa]">
-              Free to start · bring your own Resend key
-            </span>
+            <span className="text-sm text-[#aaa]">Free to start</span>
           </div>
         </div>
       </section>
@@ -91,19 +89,19 @@ export default function LandingPage() {
         <div className="bg-[#f0efe9] rounded-2xl p-6 flex flex-col gap-3">
           <ChatBubble
             role="user"
-            text="Show top 5 HN stories, dark header, weekly on Mondays"
+            text="Add AI news from the last 48 hours and recent gems with 100+ points"
           />
           <ChatBubble
             role="ai"
-            text="Done! Dark header applied, 5 top stories set, schedule updated to weekly every Monday at 8:00 AM UTC."
+            text="Done! Added an AI topic section for the past 48 hours and a Recent Gems section with a 100-point threshold."
           />
           <ChatBubble
             role="user"
-            text="Make the font serif and add a custom intro"
+            text="Make it weekly on Fridays, dark header"
           />
           <ChatBubble
             role="ai"
-            text="Switched to serif font and added an intro section. What text would you like there?"
+            text="Updated to weekly on Fridays and applied a dark header."
           />
         </div>
       </section>
@@ -320,13 +318,11 @@ export default function LandingPage() {
       </section>
 
       <footer className="border-t border-[#333] bg-[#1a1a1a] px-8 py-6">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="max-w-6xl mx-auto flex items-center justify-between px-6">
           <span className="text-sm text-[#666]">HN Digest</span>
           <span className="text-sm text-[#666]">
-            Built with{" "}
-            <a href="https://copilotkit.ai" className="hover:text-[#aaa] transition-colors">CopilotKit</a>
-            {" "}+{" "}
-            <a href="https://resend.com" className="hover:text-[#aaa] transition-colors">Resend</a>
+            Built by{" "}
+            <a href="https://github.com/Anmol-Baranwal" target="_blank" rel="noopener noreferrer" className="text-[#888] hover:text-[#aaa] transition-colors">Anmol-Baranwal</a>
           </span>
         </div>
       </footer>

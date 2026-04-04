@@ -38,7 +38,8 @@ export async function fetchTopicStories(
 }
 
 export async function fetchAskHN(count = 5): Promise<HNStory[]> {
-  const url = `${ALGOLIA}/search?tags=ask_hn&numericFilters=points>10&hitsPerPage=${count}`;
+  const since = Math.floor(Date.now() / 1000) - 7 * 24 * 3600;
+  const url = `${ALGOLIA}/search?tags=ask_hn&numericFilters=points>10,created_at_i>${since}&hitsPerPage=${count}`;
   const res = await fetch(url, { next: { revalidate: 3600 } });
   const data = await res.json();
   return (data.hits ?? []).slice(0, count).map(hitToStory);
@@ -60,7 +61,8 @@ export async function fetchHighSignal(
   count = 5,
   minPoints = 200
 ): Promise<HNStory[]> {
-  const url = `${ALGOLIA}/search?tags=story&numericFilters=points>${minPoints}&hitsPerPage=${count * 2}`;
+  const since = Math.floor(Date.now() / 1000) - 30 * 24 * 3600;
+  const url = `${ALGOLIA}/search?tags=story&numericFilters=points>${minPoints},created_at_i>${since}&hitsPerPage=${count * 2}`;
   const res = await fetch(url, { next: { revalidate: 3600 } });
   const data = await res.json();
   return (data.hits ?? [])

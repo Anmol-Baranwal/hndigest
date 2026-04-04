@@ -19,14 +19,12 @@ const SECTION_PALETTE = [
   { type: "topic",         icon: "🔍", label: "Topic",             desc: "Stories by keyword (AI, Rust, etc.)" },
   { type: "recent-gems",   icon: "💎", label: "Recent Gems",       desc: "New stories with high points" },
   { type: "high-signal",   icon: "📡", label: "High Signal",       desc: "High points, low comments" },
-  { type: "heading",        icon: "H",  label: "Heading",          desc: "A section title" },
-  { type: "custom-text",    icon: "¶",  label: "Text",             desc: "Custom paragraph" },
 ] as const;
 
 const PROMPT_SUGGESTIONS = [
-  "Top 10 stories, dark header, daily at 9am",
-  "Show HN + who's hiring, serif font, weekly on Fridays",
-  "Most discussed stories with an open-source section, minimal style",
+  "Add AI news from the last 48 hours + high signal stories with 200+ points",
+  "Top stories + recent gems from last 24h + who's hiring, daily at 9am",
+  "Most discussed + Ask HN + open source projects, weekly on Fridays",
 ];
 
 const DEFAULT_CONFIG: NewsletterConfig = {
@@ -53,6 +51,7 @@ export function NewsletterEditor() {
   const [config, setConfig] = useState<NewsletterConfig>(DEFAULT_CONFIG);
   const [previewHtml, setPreviewHtml] = useState<string>("");
   const previewPaneRef = useRef<HTMLDivElement>(null);
+  const isInitialPreviewRef = useRef(true);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [showActivate, setShowActivate] = useState(false);
@@ -354,9 +353,12 @@ CRITICAL RULES — follow exactly:
       const data = await res.json();
       if (data.html) {
         setPreviewHtml(data.html);
-        requestAnimationFrame(() => {
-          if (previewPaneRef.current) previewPaneRef.current.scrollTop = previewPaneRef.current.scrollHeight;
-        });
+        if (!isInitialPreviewRef.current) {
+          requestAnimationFrame(() => {
+            if (previewPaneRef.current) previewPaneRef.current.scrollTop = previewPaneRef.current.scrollHeight;
+          });
+        }
+        isInitialPreviewRef.current = false;
       }
     } catch {
     } finally {
@@ -406,16 +408,18 @@ CRITICAL RULES — follow exactly:
               </svg>
             </button>
             {paletteOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-[#e8e6e0] rounded-xl shadow-lg z-50 p-3 space-y-3">
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setPaletteOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-[#e8e6e0] rounded-xl shadow-lg z-50 p-3 space-y-3">
                 <div>
-                  <p className="text-xs text-[#aaa] uppercase tracking-wider mb-2">Add section</p>
+                  <p className="text-xs text-[#888] uppercase tracking-wider mb-2">Add section</p>
                   <div className="flex flex-wrap gap-1.5">
                     {SECTION_PALETTE.map(({ type, icon, label, desc }) => (
                       <button
                         key={type}
                         title={desc}
                         onClick={() => { sendToChat(`Add a ${label} section`); setPaletteOpen(false); }}
-                        className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-[#e8e6e0] text-[#444] hover:border-[#FF6600] hover:text-[#FF6600] transition-colors"
+                        className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-[#d4d1ca] text-[#333] hover:border-[#FF6600] hover:text-[#FF6600] transition-colors"
                       >
                         <span>{icon}</span>
                         <span>{label}</span>
@@ -424,7 +428,7 @@ CRITICAL RULES — follow exactly:
                   </div>
                 </div>
                 <div className="border-t border-[#f0efe9] pt-3">
-                  <p className="text-xs text-[#aaa] uppercase tracking-wider mb-2">Try a prompt</p>
+                  <p className="text-xs text-[#888] uppercase tracking-wider mb-2">Try a prompt</p>
                   <div className="space-y-1.5">
                     {PROMPT_SUGGESTIONS.map((p) => (
                       <button
@@ -438,6 +442,7 @@ CRITICAL RULES — follow exactly:
                   </div>
                 </div>
               </div>
+              </>
             )}
           </div>}
           {hasSchedule && (

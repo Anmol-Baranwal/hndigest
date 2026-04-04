@@ -385,14 +385,6 @@ function OpenSourceSection({ projects, styles }: { projects: HNStory[]; styles: 
           </Section>
         );
       })}
-      <Section style={{ padding: "8px 0 4px" }}>
-        <Link
-          href="https://github.com/trending"
-          style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}
-        >
-          View trending on GitHub →
-        </Link>
-      </Section>
     </Section>
   );
 }
@@ -446,7 +438,7 @@ function TopicSection({ section, stories, styles }: { section: NewsletterSection
             {story.title}
           </Link>
           <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0" }}>
-            {story.score} pts · {story.descendants ?? 0} comments · by {story.by}
+            {story.score} pts · <Link href={`https://news.ycombinator.com/item?id=${story.id}`} style={{ color: "#999" }}>{story.descendants ?? 0} comments</Link> · by {story.by}
           </Text>
         </Section>
       ))}
@@ -476,7 +468,7 @@ function RecentGemsSection({ section, stories, styles }: { section: NewsletterSe
                 {story.title}
               </Link>
               <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0" }}>
-                {story.score} pts · {story.descendants ?? 0} comments · by {story.by}
+                {story.score} pts · <Link href={`https://news.ycombinator.com/item?id=${story.id}`} style={{ color: "#999" }}>{story.descendants ?? 0} comments</Link> · by {story.by}
               </Text>
             </Section>
           </Column>
@@ -493,7 +485,7 @@ function RecentGemsSection({ section, stories, styles }: { section: NewsletterSe
 
 function HighSignalSection({ section, stories, styles }: { section: NewsletterSection; stories: HNStory[]; styles: NewsletterStyles }) {
   if (stories.length === 0) return null;
-  const minPts = section.props.minPoints ?? 200;
+  const minPts = (section.props.minPoints && section.props.minPoints > 0) ? section.props.minPoints : 200;
 
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
@@ -557,7 +549,7 @@ function TrendingSection({ stories, styles }: { stories: HNStory[]; styles: News
                 {story.title}
               </Link>
               <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0", lineHeight: "1" }}>
-                {story.score} pts · {story.descendants ?? 0} comments · by {story.by}
+                {story.score} pts · <Link href={`https://news.ycombinator.com/item?id=${story.id}`} style={{ color: "#999" }}>{story.descendants ?? 0} comments</Link> · by {story.by}
               </Text>
             </Section>
           </Column>
