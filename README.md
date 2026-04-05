@@ -1,36 +1,33 @@
 # HN Digest
 
-Build and receive your own Hacker News digest, delivered to your inbox on a schedule you choose.
-
-Describe what you want (top stories, AI news, recent gems, who's hiring) and the AI builds the email. Set it once, get it daily, weekly, or monthly. Built with [CopilotKit](https://copilotkit.ai), [Resend](https://resend.com), [Neon](https://neon.tech).
+Build and receive your own Hacker News digest, delivered to your inbox on a schedule you choose. Built with [CopilotKit](https://github.com/CopilotKit/CopilotKit), [Resend](https://resend.com) and [QStash](https://upstash.com/docs/qstash/overall/getstarted).
 
 ## What it does
 
-- **AI editor** — describe your digest in plain English. The AI adds/removes sections, changes colors and fonts, and sets your schedule.
-- **10+ section types** — top stories, topic search, Ask HN, hiring threads, recent gems, and more.
-- **Live preview** — rendered with real HN data as you edit.
-- **Scheduled delivery** — daily, weekly, or monthly. Activated via magic link, no password needed.
-- **Your own Resend key** — the digest lands in your inbox from your own Resend account. Your key is encrypted with AES-256-GCM and only decrypted at send time.
-
-## How the Resend key works
-
-When you activate your digest, you enter your own Resend API key. It is:
-
-- Encrypted with AES-256-GCM before being stored
-- Decrypted only at send time, in memory, on the server
-- Never returned to the browser or logged
-- Wiped immediately when you delete your digest
-
-Magic link emails are sent through each user's own key. The app-level `RESEND_API_KEY` is only a fallback and is optional.
+- **AI editor** - chat to build your digest. Add or remove sections, change colors, fonts, layout, and set your schedule.
+- **10+ section types** - top stories, topic search, Ask HN, hiring threads, recent gems, trending, and more.
+- **Live preview** - rendered with real HN data as you edit.
+- **Scheduled delivery** - daily, weekly, or monthly at your exact time and timezone. Activated via magic link, no password needed.
+- **Your own Resend key** - digests are sent from your own account. Encrypted with AES-256-GCM, decrypted only at send time, never exposed to the browser.
 
 ## Getting started
+
+### Accounts you'll need
+
+| Service | What for |
+|---|---|
+| [OpenAI](https://platform.openai.com) | AI editor (CopilotKit) |
+| [Upstash](https://upstash.com) | QStash — per-user digest scheduling |
+| [Resend](https://resend.com) | Optional fallback for magic link emails — users bring their own key for digest sends |
+
+> **Database**: Deploy to Vercel and add the [Neon integration](https://vercel.com/integrations/neon) — `POSTGRES_URL` is auto-injected. For local dev, create a free DB at [neon.tech](https://neon.tech).
 
 ### 1. Clone and install
 
 ```bash
 git clone https://github.com/Anmol-Baranwal/hndigest.git
 cd hndigest
-npm install
+npm install   # or pnpm install / yarn
 ```
 
 ### 2. Set up environment variables
@@ -42,15 +39,15 @@ cp .env.example .env.local
 | Variable | Required | Description |
 |---|---|---|
 | `OPENAI_API_KEY` | Yes | Powers the CopilotKit AI agent |
-| `POSTGRES_URL` | Yes | Neon Postgres connection string (auto-set by Neon Vercel integration) |
-| `QSTASH_TOKEN` | Yes | Upstash QStash token for per-user scheduling |
-| `RESEND_API_KEY` | No | Fallback for magic link emails. Users bring their own key at activation — magic links are sent through theirs |
+| `POSTGRES_URL` | Yes | Neon Postgres — auto-set by Vercel integration |
+| `QSTASH_TOKEN` | Yes | From [console.upstash.com](https://console.upstash.com) → QStash |
+| `RESEND_API_KEY` | No | Fallback for magic link emails — users provide their own key at activation |
 | `JWT_SECRET` | Prod | Any long random string for signing session tokens |
 | `ENCRYPTION_SECRET` | Prod | 32-char key for encrypting stored Resend keys |
-| `CRON_SECRET` | Prod | Protects the `/api/send` endpoint from unauthorized calls |
-| `NEXT_PUBLIC_BASE_URL` | Prod | Your deployed URL (used in magic links and QStash callbacks) |
+| `CRON_SECRET` | Prod | Protects `/api/send` from unauthorized calls |
+| `NEXT_PUBLIC_BASE_URL` | Prod | Your deployed URL — used in magic links and QStash callbacks |
 
-In development, `JWT_SECRET`, `ENCRYPTION_SECRET`, and `CRON_SECRET` fall back to safe dev values automatically. Without `QSTASH_TOKEN`, scheduling is skipped gracefully.
+In development, `JWT_SECRET` and `ENCRYPTION_SECRET` are auto-generated on first run and saved to `.env.local` — you don't need to set them. `CRON_SECRET` is optional in dev (the check is skipped if unset). Without `QSTASH_TOKEN`, scheduling is skipped gracefully.
 
 ### 3. Run locally
 
@@ -63,8 +60,13 @@ Open [http://localhost:3000](http://localhost:3000), go to the editor, build you
 ## Deploying to Vercel
 
 1. Push to GitHub and import the repo in Vercel.
-2. Add all environment variables in the Vercel dashboard.
-3. Add `QSTASH_TOKEN` from [console.upstash.com](https://console.upstash.com) → QStash. Each user activation creates a per-user QStash schedule that fires at their exact chosen time.
+2. Add the [Neon integration](https://vercel.com/integrations/neon) — sets `POSTGRES_URL` automatically.
+3. Add `OPENAI_API_KEY`, `QSTASH_TOKEN`, `CRON_SECRET`, `ENCRYPTION_SECRET`, `JWT_SECRET`, and `NEXT_PUBLIC_BASE_URL` in the Vercel dashboard.
+
+## Docs
+
+- [Architecture](docs/architecture.md) — system design, data flow, security model
+- [Self-hosting](docs/self-host.md) — step-by-step setup guide
 
 ## Stack
 
