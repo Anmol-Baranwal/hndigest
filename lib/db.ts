@@ -28,6 +28,15 @@ async function ensureTables() {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
+  await db`
+    CREATE TABLE IF NOT EXISTS test_sends (
+      id TEXT PRIMARY KEY,
+      schedule_id TEXT,
+      config_title TEXT,
+      recipients JSONB,
+      tried_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
   // Migrate existing tables
   await db`ALTER TABLE newsletters ADD COLUMN IF NOT EXISTS qstash_schedule_id TEXT`;
 }
@@ -144,4 +153,67 @@ export async function getAllActiveSchedules(): Promise<ScheduleRecord[]> {
   const db = sql();
   const rows = await db`SELECT * FROM newsletters WHERE (schedule->>'active')::boolean = true`;
   return rows.map(toRecord);
+}
+
+// Creates a draft record (placeholder owner_email) before activation
+export async function createDraftSchedule(record: ScheduleRecord): Promise<ScheduleRecord> {
+  await ensureTables();
+  const db = sql();
+  await db`
+    INSERT INTO newsletters (
+      id, owner_email, encrypted_resend_key, encrypted_llm_key, llm_provider,
+      title, sections, styles, hn_config, schedule, recipients, send_history,
+      qstash_schedule_id, created_at, updated_at
+    ) VALUES (
+      ${record.id}, ${record.ownerEmail}, ${record.encryptedResendKey},
+      ${record.encryptedLlmKey ?? null}, ${record.llmProvider ?? null},
+      ${record.title}, ${JSON.stringify(record.sections)}, ${JSON.stringify(record.styles)},
+      ${JSON.stringify(record.hnConfig)}, ${JSON.stringify(record.schedule)},
+      ${JSON.stringify(record.recipients)}, ${JSON.stringify(record.sendHistory ?? [])},
+      ${record.qstashScheduleId ?? null}, ${record.createdAt}, ${record.updatedAt}
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      encrypted_resend_key = EXCLUDED.encrypted_resend_key,
+      title = EXCLUDED.title,
+      sections = EXCLUDED.sections,
+      styles = EXCLUDED.styles,
+      hn_config = EXCLUDED.hn_config,
+      schedule = EXCLUDED.schedule,
+      recipients = EXCLUDED.recipients,
+      updated_at = EXCLUDED.updated_at
+  `;
+  return record;
+}
+
+// Promotes a draft to a real schedule: sets owner_email + marks active
+export async function activateDraftSchedule(
+  id: string,
+  ownerEmail: string
+): Promise<ScheduleRecord | null> {
+  await ensureTables();
+  const db = sql();
+  const now = new Date().toISOString();
+  const rows = await db`
+    UPDATE newsletters
+    SET owner_email = ${ownerEmail},
+        schedule = jsonb_set(schedule, '{active}', 'true'),
+        updated_at = ${now}
+    WHERE id = ${id}
+    RETURNING *
+  `;
+  return rows.length ? toRecord(rows[0]) : null;
+}
+
+export async function logTestSend(
+  id: string,
+  scheduleId: string,
+  configTitle: string,
+  recipients: string[]
+): Promise<void> {
+  await ensureTables();
+  const db = sql();
+  await db`
+    INSERT INTO test_sends (id, schedule_id, config_title, recipients)
+    VALUES (${id}, ${scheduleId}, ${configTitle}, ${JSON.stringify(recipients)})
+  `;
 }

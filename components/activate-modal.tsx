@@ -17,6 +17,7 @@ export function ActivateModal({ config, onClose }: Props) {
   const [error, setError] = useState("");
   const [devLink, setDevLink] = useState("");
   const [testSent, setTestSent] = useState(false);
+  const [draftScheduleId, setDraftScheduleId] = useState("");
 
   const handleTestSend = async () => {
     if (!resendKey) {
@@ -30,7 +31,7 @@ export function ActivateModal({ config, onClose }: Props) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/send", {
+      const res = await fetch("/api/send-test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -41,6 +42,7 @@ export function ActivateModal({ config, onClose }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      if (data.scheduleId) setDraftScheduleId(data.scheduleId);
       setTestSent(true);
       setStep("email");
     } catch (e) {
@@ -61,7 +63,12 @@ export function ActivateModal({ config, onClose }: Props) {
       const res = await fetch("/api/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, config, resendApiKey: resendKey || undefined }),
+        body: JSON.stringify({
+          email,
+          config,
+          resendApiKey: resendKey || undefined,
+          scheduleId: draftScheduleId || undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -200,12 +207,14 @@ export function ActivateModal({ config, onClose }: Props) {
             >
               {loading ? "Sending magic link…" : "Activate schedule →"}
             </button>
-            <button
-              onClick={() => { setError(""); setStep("key"); }}
-              className="w-full text-sm text-[#aaa] hover:text-[#666] transition-colors py-1"
-            >
-              ← Back
-            </button>
+            {!testSent && (
+              <button
+                onClick={() => { setError(""); setStep("key"); }}
+                className="w-full text-sm text-[#aaa] hover:text-[#666] transition-colors py-1"
+              >
+                ← Back
+              </button>
+            )}
           </div>
         )}
 

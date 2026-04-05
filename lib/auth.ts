@@ -8,7 +8,7 @@ const getSecret = () => new TextEncoder().encode(getJwtSecret());
 export async function generateMagicToken(email: string): Promise<string> {
   return new SignJWT({ email, type: "magic-link" })
     .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("15m")
+    .setExpirationTime("30m")
     .setIssuedAt()
     .sign(getSecret());
 }
