@@ -116,7 +116,8 @@ export function utcTimeToLocal(utcHHMM: string, timezone: string): string {
 }
 
 export function getTzAbbr(timezone: string): string {
-  return new Intl.DateTimeFormat("en-US", { timeZone: timezone, timeZoneName: "shortOffset" })
-    .formatToParts(new Date())
+  const abbr = new Intl.DateTimeFormat("en-US", { timeZone: timezone, timeZoneName: "shortOffset" })
+    .formatToParts(new Date(2024, 0, 1))
     .find((p) => p.type === "timeZoneName")?.value ?? timezone;
+  return abbr === "GMT+0" ? "GMT" : abbr;
 }

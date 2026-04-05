@@ -341,7 +341,7 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
                   <select
                     value={editTimezone}
                     onChange={(e) => setEditTimezone(e.target.value)}
-                    className={`${selectCls} w-52`}
+                    className={`${selectCls} w-32`}
                   >
                     {TIMEZONES.map((tz) => (
                       <option key={tz.value} value={tz.value}>{tz.label}</option>
@@ -466,52 +466,8 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
         </div>
 
         <div className="bg-white border border-border rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-semibold text-foreground">Send to</h2>
-            <span className="text-xs text-placeholder">{recipients.length} / 3</span>
-          </div>
-          <p className="text-xs text-placeholder mb-4">Your personal delivery addresses. Max 3.</p>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {recipients.length === 0 && (
-              <p className="text-sm text-placeholder">No addresses yet. Add yours below.</p>
-            )}
-            {recipients.map((r) => (
-              <div
-                key={r}
-                className="flex items-center gap-1.5 bg-surface border border-border rounded-full pl-3 pr-1 py-1"
-              >
-                <span className="text-sm text-foreground">{r}</span>
-                <button
-                  onClick={() => removeRecipient(r)}
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-placeholder hover:bg-border hover:text-body transition-colors text-xs"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-          {recipients.length < 3 && (
-            <div className="space-y-2">
-            <div className="flex gap-2">
-              <input
-                type="email"
-                value={newRecipient}
-                onChange={(e) => { setNewRecipient(e.target.value); setRecipientError(""); }}
-                onKeyDown={(e) => e.key === "Enter" && addRecipient()}
-                placeholder="you@example.com"
-                className="flex-1 border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-accent transition-colors"
-              />
-              <button
-                onClick={addRecipient}
-                disabled={addingRecipient || !newRecipient.includes("@")}
-                className="bg-foreground text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-foreground-dark transition-colors disabled:opacity-40"
-              >
-                {addingRecipient ? "Adding…" : "Add"}
-              </button>
-            </div>
-            {recipientError && <p className="text-xs text-red-500">{recipientError}</p>}
-            </div>
-          )}
+          <h2 className="text-sm font-semibold text-foreground mb-1">Delivery email</h2>
+          <p className="text-sm text-foreground">{recipients[0]}</p>
         </div>
 
         <div className="bg-white border border-border rounded-2xl p-6">

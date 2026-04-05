@@ -140,5 +140,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   await deleteSchedule(existing.id);
-  return NextResponse.json({ success: true });
+  const res = NextResponse.json({ success: true });
+  res.cookies.set("session", "", { maxAge: 0, path: "/" });
+  return res;
 }
