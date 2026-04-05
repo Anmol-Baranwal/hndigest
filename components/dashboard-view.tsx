@@ -22,12 +22,12 @@ function normalizeTime(input: string): string {
 }
 
 const chevron = (
-  <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#aaa] pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
+  <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-placeholder pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
   </svg>
 );
 
-const selectCls = "appearance-none border border-[#e8e6e0] rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:border-[#FF6600] text-[#1a1a1a] bg-white";
+const selectCls = "appearance-none border border-border rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:border-accent text-foreground bg-white";
 
 function nextSendLabel(frequency: string, time: string, active: boolean, day?: number): string {
   if (!active) return "Paused";
@@ -78,10 +78,10 @@ function formatDateTime(iso: string) {
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-white border border-[#e8e6e0] rounded-xl p-5">
-      <p className="text-xs text-[#aaa] uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-2xl font-semibold text-[#1a1a1a]">{value}</p>
-      {sub && <p className="text-xs text-[#aaa] mt-0.5">{sub}</p>}
+    <div className="bg-white border border-border rounded-xl p-5">
+      <p className="text-xs text-placeholder uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-2xl font-semibold text-foreground">{value}</p>
+      {sub && <p className="text-xs text-placeholder mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -105,10 +105,10 @@ function KeyField({
   };
 
   return (
-    <div className="flex items-center justify-between py-4 border-b border-[#f0efe9] last:border-0">
+    <div className="flex items-center justify-between py-4 border-b border-card last:border-0">
       <div>
-        <p className="text-sm font-medium text-[#1a1a1a]">{label}</p>
-        <p className="text-xs text-[#aaa] mt-0.5">{hint}</p>
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="text-xs text-placeholder mt-0.5">{hint}</p>
       </div>
       {editing ? (
         <div className="flex items-center gap-2">
@@ -119,23 +119,23 @@ function KeyField({
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && save()}
             placeholder={placeholder}
-            className="border border-[#e8e6e0] rounded-lg px-3 py-1.5 text-sm w-56 focus:outline-none focus:border-[#FF6600]"
+            className="border border-border rounded-lg px-3 py-1.5 text-sm w-56 focus:outline-none focus:border-accent"
           />
           <button
             onClick={save}
             disabled={saving}
-            className="text-xs bg-[#1a1a1a] text-white px-3 py-1.5 rounded-lg disabled:opacity-50"
+            className="text-xs bg-foreground text-white px-3 py-1.5 rounded-lg disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save"}
           </button>
-          <button onClick={() => setEditing(false)} className="text-xs text-[#aaa] hover:text-[#666]">
+          <button onClick={() => setEditing(false)} className="text-xs text-placeholder hover:text-body">
             Cancel
           </button>
         </div>
       ) : (
         <button
           onClick={() => setEditing(true)}
-          className="text-xs border border-[#e8e6e0] px-3 py-1.5 rounded-lg text-[#666] hover:bg-[#f8f7f4] transition-colors"
+          className="text-xs border border-border px-3 py-1.5 rounded-lg text-body hover:bg-surface transition-colors"
         >
           Update
         </button>
@@ -218,17 +218,17 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
 
   if (!schedule) {
     return (
-      <div className="min-h-screen bg-[#fafaf8]">
+      <div className="min-h-screen bg-background">
         <Nav email={email} />
         <div className="max-w-4xl mx-auto px-8 py-24 text-center">
           <div className="text-5xl mb-6">✉️</div>
-          <h2 className="font-serif text-3xl text-[#1a1a1a] mb-3">No newsletter yet</h2>
-          <p className="text-[#888] text-sm mb-8">
+          <h2 className="font-serif text-3xl text-foreground mb-3">No newsletter yet</h2>
+          <p className="text-subtle text-sm mb-8">
             Build your first newsletter in the AI editor and activate a schedule.
           </p>
           <Link
             href="/editor"
-            className="inline-block bg-[#FF6600] text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-[#e55b00] transition-colors"
+            className="inline-block bg-accent text-white px-8 py-3 rounded-full text-sm font-medium hover:bg-accent-hover transition-colors"
           >
             Open AI Editor →
           </Link>
@@ -241,7 +241,7 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
   const sentCount = sendHistory.filter((s) => s.success).length;
 
   return (
-    <div className="min-h-screen bg-[#fafaf8]">
+    <div className="min-h-screen bg-background">
       <Nav email={email} />
 
       <div className="max-w-5xl mx-auto px-8 py-10 space-y-6">
@@ -249,21 +249,21 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="font-serif text-4xl text-[#1a1a1a]">{schedule.title}</h1>
+              <h1 className="font-serif text-4xl text-foreground">{schedule.title}</h1>
               <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                 sched.active
                   ? "bg-green-100 text-green-700"
-                  : "bg-[#f0efe9] text-[#888]"
+                  : "bg-card text-subtle"
               }`}>
                 {sched.active ? "Active" : "Paused"}
               </span>
             </div>
-            <p className="text-sm text-[#aaa]">Created {formatDate(schedule.createdAt)}</p>
+            <p className="text-sm text-placeholder">Created {formatDate(schedule.createdAt)}</p>
           </div>
           <button
             onClick={toggleActive}
             disabled={toggling}
-            className="text-sm border border-[#e8e6e0] px-4 py-2 rounded-full text-[#666] hover:bg-[#f0efe9] transition-colors disabled:opacity-40"
+            className="text-sm border border-border px-4 py-2 rounded-full text-body hover:bg-card transition-colors disabled:opacity-40"
           >
             {toggling ? "…" : sched.active ? "Pause" : "Resume"}
           </button>
@@ -284,11 +284,11 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
           />
         </div>
 
-        <div className="bg-white border border-[#e8e6e0] rounded-2xl p-6">
+        <div className="bg-white border border-border rounded-2xl p-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h2 className="text-sm font-semibold text-[#1a1a1a]">Schedule</h2>
-              <p className="text-xs text-[#aaa] mt-0.5">When your newsletter goes out</p>
+              <h2 className="text-sm font-semibold text-foreground">Schedule</h2>
+              <p className="text-xs text-placeholder mt-0.5">When your newsletter goes out</p>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               <div className="relative">
@@ -335,7 +335,7 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
                   onChange={(e) => setEditTime(e.target.value)}
                   onBlur={(e) => setEditTime(normalizeTime(e.target.value))}
                   placeholder="HH:MM"
-                  className="border border-[#e8e6e0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#FF6600] text-[#1a1a1a] w-20"
+                  className="border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent text-foreground w-20"
                 />
                 <div className="relative">
                   <select
@@ -363,7 +363,7 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
                   await patch({ schedule: { ...sched, frequency: editFreq, time: localTimeToUtc(editTime, editTimezone), timezone: editTimezone, day: editDay } });
                   setSavingSchedule(false);
                 }}
-                className="text-sm bg-[#1a1a1a] text-white px-4 py-2 rounded-lg hover:bg-[#333] transition-colors disabled:opacity-40"
+                className="text-sm bg-foreground text-white px-4 py-2 rounded-lg hover:bg-foreground-dark transition-colors disabled:opacity-40"
               >
                 {savingSchedule ? "Saving…" : "Update"}
               </button>
@@ -372,16 +372,16 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
         </div>
 
         <div className="grid grid-cols-5 gap-6">
-          <div className="col-span-3 bg-white border border-[#e8e6e0] rounded-2xl p-6 space-y-6">
+          <div className="col-span-3 bg-white border border-border rounded-2xl p-6 space-y-6">
             <div>
-              <h2 className="text-sm font-semibold text-[#1a1a1a] mb-4">Content Sections</h2>
+              <h2 className="text-sm font-semibold text-foreground mb-4">Content Sections</h2>
               <div className="space-y-1">
                 {sections.filter((s) => !SECTION_META[s.type]?.structural).map((section, i) => {
                   const meta = SECTION_META[section.type];
                   const count = section.props.count;
                   return (
-                    <div key={section.id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-[#fafaf8]">
-                      <span className="text-xs text-[#aaa] w-4 text-right">{i + 1}</span>
+                    <div key={section.id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-background">
+                      <span className="text-xs text-placeholder w-4 text-right">{i + 1}</span>
                       <span
                         className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0"
                         style={{ color: meta.color, background: meta.bg }}
@@ -389,8 +389,8 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
                         {meta.icon}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium text-[#1a1a1a]">{meta.label}</span>
-                        {count && <span className="text-xs text-[#aaa] ml-1.5">{count} items</span>}
+                        <span className="text-sm font-medium text-foreground">{meta.label}</span>
+                        {count && <span className="text-xs text-placeholder ml-1.5">{count} items</span>}
                       </div>
                     </div>
                   );
@@ -398,41 +398,41 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
               </div>
             </div>
 
-            <div className="border-t border-[#f0efe9] pt-5">
-              <h2 className="text-sm font-semibold text-[#1a1a1a] mb-3">Style & Config</h2>
+            <div className="border-t border-card pt-5">
+              <h2 className="text-sm font-semibold text-foreground mb-3">Style & Config</h2>
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="bg-[#fafaf8] rounded-lg px-4 py-3">
-                  <p className="text-xs text-[#aaa] mb-1">Font</p>
-                  <p className="font-medium text-[#1a1a1a] capitalize">{styles.fontFamily}</p>
+                <div className="bg-background rounded-lg px-4 py-3">
+                  <p className="text-xs text-placeholder mb-1">Font</p>
+                  <p className="font-medium text-foreground capitalize">{styles.fontFamily}</p>
                 </div>
-                <div className="bg-[#fafaf8] rounded-lg px-4 py-3">
-                  <p className="text-xs text-[#aaa] mb-1">Header style</p>
-                  <p className="font-medium text-[#1a1a1a] capitalize">{styles.headerStyle}</p>
+                <div className="bg-background rounded-lg px-4 py-3">
+                  <p className="text-xs text-placeholder mb-1">Header style</p>
+                  <p className="font-medium text-foreground capitalize">{styles.headerStyle}</p>
                 </div>
-                <div className="bg-[#fafaf8] rounded-lg px-4 py-3">
-                  <p className="text-xs text-[#aaa] mb-1">HN category</p>
-                  <p className="font-medium text-[#1a1a1a]">{hnConfig.category.replace("stories", " stories")}</p>
+                <div className="bg-background rounded-lg px-4 py-3">
+                  <p className="text-xs text-placeholder mb-1">HN category</p>
+                  <p className="font-medium text-foreground">{hnConfig.category.replace("stories", " stories")}</p>
                 </div>
-                <div className="bg-[#fafaf8] rounded-lg px-4 py-3">
-                  <p className="text-xs text-[#aaa] mb-1">Accent color</p>
+                <div className="bg-background rounded-lg px-4 py-3">
+                  <p className="text-xs text-placeholder mb-1">Accent color</p>
                   <div className="flex items-center gap-2">
                     <span
-                      className="w-3.5 h-3.5 rounded-full border border-[#e8e6e0] flex-shrink-0"
+                      className="w-3.5 h-3.5 rounded-full border border-border flex-shrink-0"
                       style={{ background: styles.primaryColor }}
                     />
-                    <p className="font-medium text-[#1a1a1a] font-mono text-xs">{styles.primaryColor}</p>
+                    <p className="font-medium text-foreground font-mono text-xs">{styles.primaryColor}</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="col-span-2 bg-white border border-[#e8e6e0] rounded-2xl p-6">
-            <h2 className="text-sm font-semibold text-[#1a1a1a] mb-4">Send History</h2>
+          <div className="col-span-2 bg-white border border-border rounded-2xl p-6">
+            <h2 className="text-sm font-semibold text-foreground mb-4">Send History</h2>
             {sendHistory.length === 0 ? (
               <div className="text-center py-10">
                 <div className="text-3xl mb-3">📭</div>
-                <p className="text-sm text-[#aaa]">No sends yet.</p>
+                <p className="text-sm text-placeholder">No sends yet.</p>
                 <p className="text-xs text-[#bbb] mt-1">
                   Your first email will appear here after it's sent.
                 </p>
@@ -440,11 +440,11 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
             ) : (
               <div className="space-y-1">
                 {sendHistory.slice(0, 12).map((send, i) => (
-                  <div key={i} className="flex items-center gap-3 py-2.5 border-b border-[#f8f7f4] last:border-0">
+                  <div key={i} className="flex items-center gap-3 py-2.5 border-b border-surface last:border-0">
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${send.success ? "bg-green-500" : "bg-red-400"}`} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-[#1a1a1a]">{formatDateTime(send.sentAt)}</p>
-                      <p className="text-xs text-[#aaa]">
+                      <p className="text-xs text-foreground">{formatDateTime(send.sentAt)}</p>
+                      <p className="text-xs text-placeholder">
                         {send.success
                           ? `${send.recipientCount} recipient${send.recipientCount !== 1 ? "s" : ""}`
                           : `Failed · ${send.error?.slice(0, 30) ?? "unknown error"}`}
@@ -456,7 +456,7 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
                   </div>
                 ))}
                 {sendHistory.length > 12 && (
-                  <p className="text-xs text-[#aaa] text-center pt-2">
+                  <p className="text-xs text-placeholder text-center pt-2">
                     +{sendHistory.length - 12} older sends
                   </p>
                 )}
@@ -465,25 +465,25 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
           </div>
         </div>
 
-        <div className="bg-white border border-[#e8e6e0] rounded-2xl p-6">
+        <div className="bg-white border border-border rounded-2xl p-6">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-semibold text-[#1a1a1a]">Send to</h2>
-            <span className="text-xs text-[#aaa]">{recipients.length} / 3</span>
+            <h2 className="text-sm font-semibold text-foreground">Send to</h2>
+            <span className="text-xs text-placeholder">{recipients.length} / 3</span>
           </div>
-          <p className="text-xs text-[#aaa] mb-4">Your personal delivery addresses. Max 3.</p>
+          <p className="text-xs text-placeholder mb-4">Your personal delivery addresses. Max 3.</p>
           <div className="flex flex-wrap gap-2 mb-4">
             {recipients.length === 0 && (
-              <p className="text-sm text-[#aaa]">No addresses yet. Add yours below.</p>
+              <p className="text-sm text-placeholder">No addresses yet. Add yours below.</p>
             )}
             {recipients.map((r) => (
               <div
                 key={r}
-                className="flex items-center gap-1.5 bg-[#f8f7f4] border border-[#e8e6e0] rounded-full pl-3 pr-1 py-1"
+                className="flex items-center gap-1.5 bg-surface border border-border rounded-full pl-3 pr-1 py-1"
               >
-                <span className="text-sm text-[#1a1a1a]">{r}</span>
+                <span className="text-sm text-foreground">{r}</span>
                 <button
                   onClick={() => removeRecipient(r)}
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-[#aaa] hover:bg-[#e8e6e0] hover:text-[#666] transition-colors text-xs"
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-placeholder hover:bg-border hover:text-body transition-colors text-xs"
                 >
                   ×
                 </button>
@@ -499,12 +499,12 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
                 onChange={(e) => { setNewRecipient(e.target.value); setRecipientError(""); }}
                 onKeyDown={(e) => e.key === "Enter" && addRecipient()}
                 placeholder="you@example.com"
-                className="flex-1 border border-[#e8e6e0] rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#FF6600] transition-colors"
+                className="flex-1 border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-accent transition-colors"
               />
               <button
                 onClick={addRecipient}
                 disabled={addingRecipient || !newRecipient.includes("@")}
-                className="bg-[#1a1a1a] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#333] transition-colors disabled:opacity-40"
+                className="bg-foreground text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-foreground-dark transition-colors disabled:opacity-40"
               >
                 {addingRecipient ? "Adding…" : "Add"}
               </button>
@@ -514,9 +514,9 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
           )}
         </div>
 
-        <div className="bg-white border border-[#e8e6e0] rounded-2xl p-6">
-          <h2 className="text-sm font-semibold text-[#1a1a1a] mb-1">API Keys</h2>
-          <p className="text-xs text-[#aaa] mb-4">Your keys are encrypted at rest and never exposed.</p>
+        <div className="bg-white border border-border rounded-2xl p-6">
+          <h2 className="text-sm font-semibold text-foreground mb-1">API Keys</h2>
+          <p className="text-xs text-placeholder mb-4">Your keys are encrypted at rest and never exposed.</p>
 
           <KeyField
             label="Resend API Key"
@@ -528,12 +528,12 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
 
         <div className="bg-white border border-red-100 rounded-2xl p-6">
           <h2 className="text-sm font-semibold text-red-500 mb-1">Danger Zone</h2>
-          <p className="text-xs text-[#aaa] mb-4">
+          <p className="text-xs text-placeholder mb-4">
             Deleting your newsletter removes all saved data including your encrypted API key. This cannot be undone.
           </p>
           {confirmDelete ? (
             <div className="flex items-center gap-3">
-              <p className="text-sm text-[#666]">Are you sure?</p>
+              <p className="text-sm text-body">Are you sure?</p>
               <button
                 onClick={deleteSchedule}
                 disabled={deleting}
@@ -543,7 +543,7 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="text-sm text-[#aaa] hover:text-[#666]"
+                className="text-sm text-placeholder hover:text-body"
               >
                 Cancel
               </button>
@@ -565,15 +565,15 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
 
 function Nav({ email }: { email: string }) {
   return (
-    <nav className="flex items-center justify-between px-8 py-5 max-w-5xl mx-auto border-b border-[#e8e6e0]">
-      <Link href="/" className="text-sm font-medium text-[#1a1a1a]">
+    <nav className="flex items-center justify-between px-8 py-5 max-w-5xl mx-auto border-b border-border">
+      <Link href="/" className="text-sm font-medium text-foreground">
         HN Digest
       </Link>
       <div className="flex items-center gap-4">
-        <span className="text-sm text-[#888]">{email}</span>
+        <span className="text-sm text-subtle">{email}</span>
         <Link
           href="/editor"
-          className="text-sm bg-[#1a1a1a] text-white px-4 py-2 rounded-full hover:bg-[#333] transition-colors"
+          className="text-sm bg-foreground text-white px-4 py-2 rounded-full hover:bg-foreground-dark transition-colors"
         >
           Open Editor
         </Link>

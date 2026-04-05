@@ -374,15 +374,15 @@ CRITICAL RULES — follow exactly:
 
 
   return (
-    <div className="flex flex-col h-screen bg-[#f8f7f4] overflow-hidden">
+    <div className="flex flex-col h-screen bg-surface overflow-hidden">
 
-      <header className="h-[60px] bg-white border-b border-[#e8e6e0] flex items-center justify-between px-5 flex-shrink-0 z-10">
+      <header className="h-[60px] bg-white border-b border-border flex items-center justify-between px-5 flex-shrink-0 z-10">
         <div className="flex items-center gap-2">
-          <Link href="/" className="text-[15px] font-semibold text-[#1a1a1a] hover:text-[#FF6600] transition-colors">
+          <Link href="/" className="text-[15px] font-semibold text-foreground hover:text-accent transition-colors">
             HN Digest
           </Link>
           <span className="text-[#e0ddd8]">/</span>
-          <span className="text-[15px] text-[#888]">Editor</span>
+          <span className="text-[15px] text-subtle">Editor</span>
         </div>
 
         <div className="flex items-center gap-2.5">
@@ -396,8 +396,8 @@ CRITICAL RULES — follow exactly:
               title="Add sections / prompts"
               className={`flex items-center justify-center w-8 h-8 rounded-lg border transition-all ${
                 paletteOpen
-                  ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
-                  : "border-[#e8e6e0] text-[#888] hover:border-[#ccc]"
+                  ? "border-foreground bg-foreground text-white"
+                  : "border-border text-subtle hover:border-[#ccc]"
               }`}
             >
               <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor">
@@ -410,16 +410,16 @@ CRITICAL RULES — follow exactly:
             {paletteOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setPaletteOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-[#e8e6e0] rounded-xl shadow-lg z-50 p-3 space-y-3">
+                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-border rounded-xl shadow-lg z-50 p-3 space-y-3">
                 <div>
-                  <p className="text-xs text-[#888] uppercase tracking-wider mb-2">Add section</p>
+                  <p className="text-xs text-subtle uppercase tracking-wider mb-2">Add section</p>
                   <div className="flex flex-wrap gap-1.5">
                     {SECTION_PALETTE.map(({ type, icon, label, desc }) => (
                       <button
                         key={type}
                         title={desc}
                         onClick={() => { sendToChat(`Add a ${label} section`); setPaletteOpen(false); }}
-                        className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-[#d4d1ca] text-[#333] hover:border-[#FF6600] hover:text-[#FF6600] transition-colors"
+                        className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border border-[#d4d1ca] text-foreground-dark hover:border-accent hover:text-accent transition-colors"
                       >
                         <span>{icon}</span>
                         <span>{label}</span>
@@ -427,14 +427,14 @@ CRITICAL RULES — follow exactly:
                     ))}
                   </div>
                 </div>
-                <div className="border-t border-[#f0efe9] pt-3">
-                  <p className="text-xs text-[#888] uppercase tracking-wider mb-2">Try a prompt</p>
+                <div className="border-t border-card pt-3">
+                  <p className="text-xs text-subtle uppercase tracking-wider mb-2">Try a prompt</p>
                   <div className="space-y-1.5">
                     {PROMPT_SUGGESTIONS.map((p) => (
                       <button
                         key={p}
                         onClick={() => { sendToChat(p); setPaletteOpen(false); }}
-                        className="w-full text-left text-xs px-3 py-2 rounded-lg bg-[#f8f7f4] hover:bg-[#f0efe9] text-[#444] transition-colors"
+                        className="w-full text-left text-xs px-3 py-2 rounded-lg bg-surface hover:bg-card text-label transition-colors"
                       >
                         {p}
                       </button>
@@ -452,13 +452,13 @@ CRITICAL RULES — follow exactly:
               <button
                 onClick={saveToSchedule}
                 disabled={saving}
-                className="text-sm border border-[#e8e6e0] px-4 py-2 rounded-lg text-[#444] hover:bg-[#f8f7f4] transition-colors disabled:opacity-40"
+                className="text-sm border border-border px-4 py-2 rounded-lg text-label hover:bg-surface transition-colors disabled:opacity-40"
               >
                 {saving ? "Saving…" : "Save"}
               </button>
               <Link
                 href="/dashboard"
-                className="text-sm border border-[#e8e6e0] px-4 py-2 rounded-lg text-[#444] hover:bg-[#f8f7f4] transition-colors"
+                className="text-sm border border-border px-4 py-2 rounded-lg text-label hover:bg-surface transition-colors"
               >
                 Dashboard
               </Link>
@@ -468,8 +468,8 @@ CRITICAL RULES — follow exactly:
             onClick={() => setPreviewOpen((v) => !v)}
             className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg border transition-all ${
               previewOpen
-                ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
-                : "border-[#e8e6e0] text-[#444] hover:border-[#ccc]"
+                ? "border-foreground bg-foreground text-white"
+                : "border-border text-label hover:border-[#ccc]"
             }`}
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
@@ -481,7 +481,7 @@ CRITICAL RULES — follow exactly:
           {!hasSchedule && (
             <button
               onClick={() => setShowActivate(true)}
-              className="text-sm bg-[#FF6600] text-white px-4 py-2 rounded-lg hover:bg-[#e55b00] transition-colors font-medium"
+              className="text-sm bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent-hover transition-colors font-medium"
             >
               Activate →
             </button>
@@ -502,17 +502,17 @@ CRITICAL RULES — follow exactly:
         </div>
 
         <div
-          className={`flex-shrink-0 border-l border-[#e8e6e0] bg-[#f0efe9] flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${
+          className={`flex-shrink-0 border-l border-border bg-card flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${
             previewOpen ? "w-[560px]" : "w-0"
           }`}
         >
-          <div className="h-12 bg-white border-b border-[#e8e6e0] flex items-center justify-between px-4 flex-shrink-0">
-            <span className="text-xs font-medium text-[#666] uppercase tracking-wider">
+          <div className="h-12 bg-white border-b border-border flex items-center justify-between px-4 flex-shrink-0">
+            <span className="text-xs font-medium text-body uppercase tracking-wider">
               Email Preview
             </span>
             <button
               onClick={() => setPreviewOpen(false)}
-              className="text-[#aaa] hover:text-[#666] transition-colors p-1 rounded"
+              className="text-placeholder hover:text-body transition-colors p-1 rounded"
               aria-label="Close preview"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -524,7 +524,7 @@ CRITICAL RULES — follow exactly:
 
           <div ref={previewPaneRef} className="flex-1 overflow-y-auto py-6 px-4">
             {previewHtml ? (
-              <div className="bg-white rounded-xl shadow-sm border border-[#e8e6e0] overflow-hidden">
+              <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
                 <iframe
                   srcDoc={previewHtml}
                   className="w-full"
@@ -534,7 +534,7 @@ CRITICAL RULES — follow exactly:
               </div>
             ) : (
               <div className="h-full flex items-center justify-center">
-                <p className="text-sm text-[#aaa]">Loading preview…</p>
+                <p className="text-sm text-placeholder">Loading preview…</p>
               </div>
             )}
           </div>

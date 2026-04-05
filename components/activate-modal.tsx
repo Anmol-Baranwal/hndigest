@@ -84,10 +84,9 @@ export function ActivateModal({ config, onClose }: Props) {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-semibold text-[#1a1a1a]">
+            <h2 className="text-xl font-semibold text-foreground">
               {step === "key" && "Activate Your Newsletter"}
               {step === "email" && "Set Up Schedule"}
               {step === "sent" && "Check Your Email"}
@@ -98,8 +97,8 @@ export function ActivateModal({ config, onClose }: Props) {
                   key={s}
                   className={`h-1 rounded-full transition-all ${
                     ["key", "email", "sent"].indexOf(step) >= i
-                      ? "w-8 bg-[#FF6600]"
-                      : "w-4 bg-[#e8e6e0]"
+                      ? "w-8 bg-accent"
+                      : "w-4 bg-border"
                   }`}
                 />
               ))}
@@ -107,7 +106,7 @@ export function ActivateModal({ config, onClose }: Props) {
           </div>
           <button
             onClick={onClose}
-            className="text-[#aaa] hover:text-[#666] text-2xl leading-none"
+            className="text-placeholder hover:text-body text-2xl leading-none"
           >
             ×
           </button>
@@ -118,14 +117,14 @@ export function ActivateModal({ config, onClose }: Props) {
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-medium text-[#444]">
+                <label className="text-sm font-medium text-label">
                   Resend API Key <span className="text-red-400">*</span>
                 </label>
                 <a
                   href="https://resend.com/api-keys"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-[#FF6600] hover:underline"
+                  className="text-xs text-accent hover:underline"
                 >
                   Get a free key →
                 </a>
@@ -135,14 +134,14 @@ export function ActivateModal({ config, onClose }: Props) {
                 value={resendKey}
                 onChange={(e) => setResendKey(e.target.value)}
                 placeholder="re_... (send access only)"
-                className="w-full border border-[#e8e6e0] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF6600] transition-colors"
+                className="w-full border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
               />
-              <p className="text-xs text-[#aaa] mt-1">
+              <p className="text-xs text-placeholder mt-1">
                 Encrypted with AES-256-GCM. Never returned to the browser.
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#444] mb-1.5">
+              <label className="block text-sm font-medium text-label mb-1.5">
                 Send test to
               </label>
               <input
@@ -150,14 +149,14 @@ export function ActivateModal({ config, onClose }: Props) {
                 value={testEmail}
                 onChange={(e) => setTestEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full border border-[#e8e6e0] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF6600] transition-colors"
+                className="w-full border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
               />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <button
               onClick={handleTestSend}
               disabled={loading}
-              className="w-full bg-[#1a1a1a] text-white py-2.5 rounded-lg text-sm font-medium hover:bg-[#333] transition-colors disabled:opacity-50"
+              className="w-full bg-foreground text-white py-2.5 rounded-lg text-sm font-medium hover:bg-foreground-dark transition-colors disabled:opacity-50"
             >
               {loading ? "Sending test…" : "Send test email →"}
             </button>
@@ -167,7 +166,7 @@ export function ActivateModal({ config, onClose }: Props) {
                 setError("");
                 setStep("email");
               }}
-              className="w-full text-sm text-[#aaa] hover:text-[#666] transition-colors py-1"
+              className="w-full text-sm text-placeholder hover:text-body transition-colors py-1"
             >
               Skip test, activate directly →
             </button>
@@ -183,12 +182,12 @@ export function ActivateModal({ config, onClose }: Props) {
               </div>
             )}
             <div>
-              <p className="text-sm text-[#666] mb-4">
+              <p className="text-sm text-body mb-4">
                 Enter your email to activate your{" "}
                 <strong>{config.schedule.frequency}</strong> schedule. You'll get
                 a magic link to manage your newsletter anytime.
               </p>
-              <label className="block text-sm font-medium text-[#444] mb-1.5">
+              <label className="block text-sm font-medium text-label mb-1.5">
                 Your email
               </label>
               <input
@@ -196,21 +195,21 @@ export function ActivateModal({ config, onClose }: Props) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full border border-[#e8e6e0] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF6600] transition-colors"
+                className="w-full border border-border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
               />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
             <button
               onClick={handleActivate}
               disabled={loading}
-              className="w-full bg-[#FF6600] text-white py-2.5 rounded-lg text-sm font-medium hover:bg-[#e55b00] transition-colors disabled:opacity-50"
+              className="w-full bg-accent text-white py-2.5 rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50"
             >
               {loading ? "Sending magic link…" : "Activate schedule →"}
             </button>
             {!testSent && (
               <button
                 onClick={() => { setError(""); setStep("key"); }}
-                className="w-full text-sm text-[#aaa] hover:text-[#666] transition-colors py-1"
+                className="w-full text-sm text-placeholder hover:text-body transition-colors py-1"
               >
                 ← Back
               </button>
@@ -222,16 +221,16 @@ export function ActivateModal({ config, onClose }: Props) {
         {step === "sent" && (
           <div className="text-center space-y-4">
             <div className="text-5xl">📬</div>
-            <p className="text-[#444] text-sm">
+            <p className="text-label text-sm">
               We sent a magic link to <strong>{email}</strong>. Click it to
               activate your newsletter and access your dashboard.
             </p>
             {devLink && (
-              <div className="bg-[#f8f7f4] rounded-lg p-3 text-left">
-                <p className="text-xs text-[#888] mb-1">Dev mode — magic link:</p>
+              <div className="bg-surface rounded-lg p-3 text-left">
+                <p className="text-xs text-subtle mb-1">Dev mode — magic link:</p>
                 <a
                   href={devLink}
-                  className="text-xs text-[#FF6600] break-all hover:underline"
+                  className="text-xs text-accent break-all hover:underline"
                 >
                   {devLink}
                 </a>
@@ -239,7 +238,7 @@ export function ActivateModal({ config, onClose }: Props) {
             )}
             <button
               onClick={onClose}
-              className="w-full border border-[#e8e6e0] text-[#666] py-2.5 rounded-lg text-sm hover:bg-[#f8f7f4] transition-colors"
+              className="w-full border border-border text-body py-2.5 rounded-lg text-sm hover:bg-surface transition-colors"
             >
               Close
             </button>

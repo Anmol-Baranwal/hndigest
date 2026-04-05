@@ -5,15 +5,33 @@
 :root {
   --background: #fafaf8;
   --foreground: #1a1a1a;
+  --foreground-dark: #333;
+  --label: #444;
+  --body: #666;
   --muted: #6b6b6b;
+  --subtle: #888;
+  --placeholder: #aaa;
   --border: #e8e6e0;
   --card: #f0efe9;
+  --surface: #f8f7f4;
   --accent: #FF6600;
+  --accent-hover: #e55b00;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-foreground-dark: var(--foreground-dark);
+  --color-label: var(--label);
+  --color-body: var(--body);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-placeholder: var(--placeholder);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-serif: 'Instrument Serif', Georgia, serif;
 }
