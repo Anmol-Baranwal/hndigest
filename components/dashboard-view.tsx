@@ -3,30 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ScheduleRecord, SectionType } from "../lib/types";
+import { ScheduleRecord } from "../lib/types";
+import { SECTION_META } from "../lib/section-meta";
+import { TIMEZONES, localTimeToUtc, utcTimeToLocal, getTzAbbr } from "../lib/timezones";
 
 interface Props {
   email: string;
   schedule: ScheduleRecord | null;
 }
-
-const SECTION_META: Record<SectionType, { label: string; icon: string; color: string; bg: string; structural?: boolean }> = {
-  "hn-stories":     { label: "Top Stories",   icon: "#",  color: "#FF6600", bg: "#fff5f0" },
-  "show-hn":        { label: "Show HN",        icon: "S",  color: "#7C3AED", bg: "#f5f0ff" },
-  "hiring":         { label: "Who's Hiring",   icon: "H",  color: "#0284C7", bg: "#f0f7ff" },
-  "open-source":    { label: "Open Source",    icon: "★",  color: "#16A34A", bg: "#f0fdf4" },
-  "most-commented": { label: "Most Discussed", icon: "D",  color: "#DC2626", bg: "#fff0f0" },
-  "trending":       { label: "Trending",       icon: "↑",  color: "#0891B2", bg: "#f0fbff" },
-  "ask-hn":         { label: "Ask HN",         icon: "?",  color: "#7C3AED", bg: "#f5f0ff" },
-  "topic":          { label: "Topic",          icon: "🔍", color: "#0284C7", bg: "#f0f7ff" },
-  "recent-gems":    { label: "Recent Gems",    icon: "💎", color: "#16A34A", bg: "#f0fdf4" },
-  "high-signal":    { label: "High Signal",    icon: "📡", color: "#DC2626", bg: "#fff0f0" },
-  "heading":        { label: "Heading",         icon: "T",  color: "#6B7280", bg: "#f9fafb", structural: true },
-  "divider":        { label: "Divider",         icon: "—",  color: "#9CA3AF", bg: "#f9fafb", structural: true },
-  "custom-text":    { label: "Text Block",      icon: "P",  color: "#6B7280", bg: "#f9fafb", structural: true },
-  "intro":          { label: "Intro",           icon: "I",  color: "#F59E0B", bg: "#fffbf0", structural: true },
-  "footer":         { label: "Footer",          icon: "F",  color: "#6B7280", bg: "#f9fafb", structural: true },
-};
 
 function normalizeTime(input: string): string {
   const digits = input.replace(/\D/g, "");
@@ -36,6 +20,14 @@ function normalizeTime(input: string): string {
   const m = Math.min(59, +digits.slice(2, 4));
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
+
+const chevron = (
+  <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#aaa] pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+  </svg>
+);
+
+const selectCls = "appearance-none border border-[#e8e6e0] rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:border-[#FF6600] text-[#1a1a1a] bg-white";
 
 function nextSendLabel(frequency: string, time: string, active: boolean, day?: number): string {
   if (!active) return "Paused";
@@ -65,8 +57,9 @@ function nextSendLabel(frequency: string, time: string, active: boolean, day?: n
   }
 
   const diff = next.getTime() - now.getTime();
+  const mins = Math.round(diff / 60000);
+  if (mins < 60) return `in ${mins}m`;
   const hours = Math.floor(diff / 3600000);
-  if (hours < 1) return "Less than 1h";
   if (hours < 24) return `in ${hours}h`;
   return `in ${Math.floor(hours / 24)}d`;
 }
@@ -159,11 +152,12 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [newRecipient, setNewRecipient] = useState("");
   const [addingRecipient, setAddingRecipient] = useState(false);
-  const [llmProvider, setLlmProvider] = useState<"openai" | "anthropic" | "gemini">(
-    initialSchedule?.llmProvider ?? "openai"
-  );
+  const [recipientError, setRecipientError] = useState("");
   const [editFreq, setEditFreq] = useState<"daily" | "weekly" | "monthly">(initialSchedule?.schedule.frequency ?? "daily");
-  const [editTime, setEditTime] = useState(initialSchedule?.schedule.time ?? "08:00");
+  const [editTimezone, setEditTimezone] = useState(initialSchedule?.schedule.timezone ?? "UTC");
+  const [editTime, setEditTime] = useState(
+    utcTimeToLocal(initialSchedule?.schedule.time ?? "08:00", initialSchedule?.schedule.timezone ?? "UTC")
+  );
   const [editDay, setEditDay] = useState<number>(initialSchedule?.schedule.day ?? 1);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const [nextSendText, setNextSendText] = useState("…");
@@ -203,6 +197,11 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
 
   const addRecipient = async () => {
     if (!schedule || !newRecipient.includes("@")) return;
+    if (schedule.recipients.includes(newRecipient.trim())) {
+      setRecipientError("This email is already added.");
+      return;
+    }
+    setRecipientError("");
     setAddingRecipient(true);
     try {
       await patch({ recipients: [...schedule.recipients, newRecipient.trim()] });
@@ -271,12 +270,12 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
         </div>
 
         <div className="grid grid-cols-4 gap-4">
-          <StatCard label="Sections" value={String(sections.length)} sub="content blocks" />
+          <StatCard label="Sections" value={String(sections.filter((s) => !SECTION_META[s.type]?.structural).length)} sub="content blocks" />
           <StatCard label="Recipients" value={String(recipients.length)} sub={recipients.length === 0 ? "add below" : recipients.length === 1 ? "email address" : "email addresses"} />
           <StatCard
             label="Schedule"
             value={sched.frequency.charAt(0).toUpperCase() + sched.frequency.slice(1)}
-            sub={`${sched.time} UTC`}
+            sub={`${utcTimeToLocal(sched.time, sched.timezone ?? "UTC")} ${getTzAbbr(sched.timezone ?? "UTC")}`}
           />
           <StatCard
             label="Next Send"
@@ -292,44 +291,41 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
               <p className="text-xs text-[#aaa] mt-0.5">When your newsletter goes out</p>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              <select
-                value={editFreq}
-                onChange={(e) => {
-                  const f = e.target.value as "daily" | "weekly" | "monthly";
-                  setEditFreq(f);
-                  setEditDay(f === "weekly" ? 1 : 1);
-                }}
-                className="border border-[#e8e6e0] rounded-lg px-2 pr-10 py-2 text-sm focus:outline-none focus:border-[#FF6600] text-[#1a1a1a] bg-white"
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={editFreq}
+                  onChange={(e) => { const f = e.target.value as "daily" | "weekly" | "monthly"; setEditFreq(f); setEditDay(1); }}
+                  className={selectCls}
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+                {chevron}
+              </div>
 
               {editFreq === "weekly" && (
-                <select
-                  value={editDay}
-                  onChange={(e) => setEditDay(Number(e.target.value))}
-                  className="border border-[#e8e6e0] rounded-lg px-3 pr-10 py-2 text-sm focus:outline-none focus:border-[#FF6600] text-[#1a1a1a] bg-white"
-                >
-                  {["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map((d, i) => (
-                    <option key={d} value={i}>{d}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select value={editDay} onChange={(e) => setEditDay(Number(e.target.value))} className={selectCls}>
+                    {["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map((d, i) => (
+                      <option key={d} value={i}>{d}</option>
+                    ))}
+                  </select>
+                  {chevron}
+                </div>
               )}
 
               {editFreq === "monthly" && (
-                <select
-                  value={editDay}
-                  onChange={(e) => setEditDay(Number(e.target.value))}
-                  className="border border-[#e8e6e0] rounded-lg px-3 pr-10 py-2 text-sm focus:outline-none focus:border-[#FF6600] text-[#1a1a1a] bg-white"
-                >
-                  {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
-                    <option key={d} value={d}>
-                      {d === 1 ? "1st" : d === 2 ? "2nd" : d === 3 ? "3rd" : `${d}th`}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select value={editDay} onChange={(e) => setEditDay(Number(e.target.value))} className={selectCls}>
+                    {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+                      <option key={d} value={d}>
+                        {d === 1 ? "1st" : d === 2 ? "2nd" : d === 3 ? "3rd" : `${d}th`}
+                      </option>
+                    ))}
+                  </select>
+                  {chevron}
+                </div>
               )}
 
               <div className="flex items-center gap-2">
@@ -339,20 +335,32 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
                   onChange={(e) => setEditTime(e.target.value)}
                   onBlur={(e) => setEditTime(normalizeTime(e.target.value))}
                   placeholder="HH:MM"
-                  className="border border-[#e8e6e0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#FF6600] text-[#1a1a1a] w-24"
+                  className="border border-[#e8e6e0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#FF6600] text-[#1a1a1a] w-20"
                 />
-                <span className="text-xs text-[#aaa]">UTC</span>
+                <div className="relative">
+                  <select
+                    value={editTimezone}
+                    onChange={(e) => setEditTimezone(e.target.value)}
+                    className={`${selectCls} w-52`}
+                  >
+                    {TIMEZONES.map((tz) => (
+                      <option key={tz.value} value={tz.value}>{tz.label}</option>
+                    ))}
+                  </select>
+                  {chevron}
+                </div>
               </div>
 
               <button
                 disabled={savingSchedule || (
                   editFreq === sched.frequency &&
-                  editTime === sched.time &&
-                  editDay === (sched.day ?? 1)
+                  localTimeToUtc(editTime, editTimezone) === sched.time &&
+                  editDay === (sched.day ?? 1) &&
+                  editTimezone === (sched.timezone ?? "UTC")
                 )}
                 onClick={async () => {
                   setSavingSchedule(true);
-                  await patch({ schedule: { ...sched, frequency: editFreq, time: editTime, day: editDay } });
+                  await patch({ schedule: { ...sched, frequency: editFreq, time: localTimeToUtc(editTime, editTimezone), timezone: editTimezone, day: editDay } });
                   setSavingSchedule(false);
                 }}
                 className="text-sm bg-[#1a1a1a] text-white px-4 py-2 rounded-lg hover:bg-[#333] transition-colors disabled:opacity-40"
@@ -483,11 +491,12 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
             ))}
           </div>
           {recipients.length < 3 && (
+            <div className="space-y-2">
             <div className="flex gap-2">
               <input
                 type="email"
                 value={newRecipient}
-                onChange={(e) => setNewRecipient(e.target.value)}
+                onChange={(e) => { setNewRecipient(e.target.value); setRecipientError(""); }}
                 onKeyDown={(e) => e.key === "Enter" && addRecipient()}
                 placeholder="you@example.com"
                 className="flex-1 border border-[#e8e6e0] rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-[#FF6600] transition-colors"
@@ -499,6 +508,8 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
               >
                 {addingRecipient ? "Adding…" : "Add"}
               </button>
+            </div>
+            {recipientError && <p className="text-xs text-red-500">{recipientError}</p>}
             </div>
           )}
         </div>
@@ -513,38 +524,6 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
             placeholder="re_…"
             onSave={(v) => patch({ resendApiKey: v }).then(() => {})}
           />
-
-          <div className="py-4 border-b border-[#f0efe9]">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-sm font-medium text-[#1a1a1a]">AI Model Key</p>
-                <p className="text-xs text-[#aaa] mt-0.5">Powers the newsletter editor chat</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <select
-                  value={llmProvider}
-                  onChange={(e) => setLlmProvider(e.target.value as "openai" | "anthropic" | "gemini")}
-                  className="border border-[#e8e6e0] rounded-lg px-2 pr-7 py-1.5 text-xs focus:outline-none focus:border-[#FF6600] text-[#666]"
-                >
-                  <option value="openai">OpenAI</option>
-                  <option value="anthropic">Anthropic</option>
-                  <option value="gemini">Gemini</option>
-                </select>
-              </div>
-            </div>
-            <KeyField
-              label={`${llmProvider.charAt(0).toUpperCase() + llmProvider.slice(1)} Key`}
-              hint={
-                llmProvider === "openai" ? "sk-proj-…" :
-                llmProvider === "anthropic" ? "sk-ant-…" : "AIza…"
-              }
-              placeholder={
-                llmProvider === "openai" ? "sk-proj-…" :
-                llmProvider === "anthropic" ? "sk-ant-…" : "AIza…"
-              }
-              onSave={(v) => patch({ llmProvider, llmApiKey: v }).then(() => {})}
-            />
-          </div>
         </div>
 
         <div className="bg-white border border-red-100 rounded-2xl p-6">

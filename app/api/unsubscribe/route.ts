@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyUnsubscribeToken } from "../../../lib/auth";
-import { getScheduleByEmail, updateSchedule } from "../../../lib/db";
+import { getScheduleByEmail, updateSchedule, setQstashScheduleId } from "../../../lib/db";
+import { cancelDigest } from "../../../lib/qstash";
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
@@ -15,6 +16,10 @@ export async function GET(req: NextRequest) {
 
   const schedule = await getScheduleByEmail(payload.ownerEmail);
   if (schedule) {
+    if (schedule.qstashScheduleId && process.env.QSTASH_TOKEN) {
+      await cancelDigest(schedule.qstashScheduleId);
+      await setQstashScheduleId(schedule.id, null);
+    }
     await updateSchedule(schedule.id, {
       schedule: { ...schedule.schedule, active: false },
     });
