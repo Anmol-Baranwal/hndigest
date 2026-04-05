@@ -12,7 +12,7 @@ export function ActivateModal({ config, onClose }: Props) {
   const [step, setStep] = useState<"key" | "email" | "sent">("key");
   const [resendKey, setResendKey] = useState("");
   const [email, setEmail] = useState("");
-  const [recipients, setRecipients] = useState(config.recipients.join(", "));
+  const [testEmail, setTestEmail] = useState(config.recipients[0] ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [devLink, setDevLink] = useState("");
@@ -24,8 +24,8 @@ export function ActivateModal({ config, onClose }: Props) {
       setError("Resend API key is required");
       return;
     }
-    if (!recipients) {
-      setError("Enter at least one recipient to send a test");
+    if (!testEmail || !testEmail.includes("@")) {
+      setError("Enter a valid email to send a test");
       return;
     }
     setLoading(true);
@@ -37,7 +37,7 @@ export function ActivateModal({ config, onClose }: Props) {
         body: JSON.stringify({
           config,
           resendApiKey: resendKey,
-          recipients: recipients.split(",").map((e) => e.trim()).filter(Boolean),
+          recipients: [testEmail.trim()],
         }),
       });
       const data = await res.json();
@@ -146,9 +146,9 @@ export function ActivateModal({ config, onClose }: Props) {
                 Send test to
               </label>
               <input
-                type="text"
-                value={recipients}
-                onChange={(e) => setRecipients(e.target.value)}
+                type="email"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
                 placeholder="you@example.com"
                 className="w-full border border-[#e8e6e0] rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF6600] transition-colors"
               />

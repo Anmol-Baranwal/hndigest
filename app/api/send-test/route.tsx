@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     await resend.emails.send({
       from: "HN Digest <onboarding@resend.dev>",
       to: recipients,
-      subject: `[Test] ${config.title}`,
+      subject: `${config.title} — ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}`,
       html,
     });
 

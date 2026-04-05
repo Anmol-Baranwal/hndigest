@@ -21,7 +21,7 @@ When you activate your digest, you enter your own Resend API key. It is:
 - Never returned to the browser or logged
 - Wiped immediately when you delete your digest
 
-The app's own Resend key is only used to send magic link login emails. You only need sending access — a key scoped to one domain is enough.
+Magic link emails are sent through each user's own key. The app-level `RESEND_API_KEY` is only a fallback and is optional.
 
 ## Getting started
 
@@ -42,12 +42,12 @@ cp .env.example .env.local
 | Variable | Required | Description |
 |---|---|---|
 | `OPENAI_API_KEY` | Yes | Powers the CopilotKit AI agent |
-| `RESEND_API_KEY` | Yes | Sends magic link login emails |
 | `POSTGRES_URL` | Yes | Neon Postgres connection string (auto-set by Neon Vercel integration) |
 | `QSTASH_TOKEN` | Yes | Upstash QStash token for per-user scheduling |
+| `RESEND_API_KEY` | No | Fallback for magic link emails. Users bring their own key at activation — magic links are sent through theirs |
 | `JWT_SECRET` | Prod | Any long random string for signing session tokens |
-| `ENCRYPTION_SECRET` | Prod | 32-char key for encrypting your stored Resend key |
-| `CRON_SECRET` | Prod | Protects the `/api/send` endpoint |
+| `ENCRYPTION_SECRET` | Prod | 32-char key for encrypting stored Resend keys |
+| `CRON_SECRET` | Prod | Protects the `/api/send` endpoint from unauthorized calls |
 | `NEXT_PUBLIC_BASE_URL` | Prod | Your deployed URL (used in magic links and QStash callbacks) |
 
 In development, `JWT_SECRET`, `ENCRYPTION_SECRET`, and `CRON_SECRET` fall back to safe dev values automatically. Without `QSTASH_TOKEN`, scheduling is skipped gracefully.
