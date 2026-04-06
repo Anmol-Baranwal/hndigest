@@ -9,7 +9,6 @@ export type SectionType =
   | "topic"           // Algolia: query + time window (dynamic)
   | "recent-gems"     // Algolia: recent stories with min points (dynamic)
   | "high-signal"     // Algolia: high points, low comments (dynamic)
-  | "heading"
   | "divider"
   | "custom-text"
   | "intro"

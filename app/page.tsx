@@ -49,7 +49,7 @@ export default function LandingPage() {
             >
               Build your newsletter →
             </Link>
-            <span className="text-sm text-placeholder">Free to start</span>
+            <span className="text-sm text-placeholder">Always free</span>
           </div>
         </div>
       </section>

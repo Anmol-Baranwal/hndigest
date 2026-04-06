@@ -61,8 +61,6 @@ function renderSection(
   switch (section.type) {
     case "intro":
       return <IntroSection key={section.id} section={section} styles={styles} title={title} />;
-    case "heading":
-      return <HeadingSection key={section.id} section={section} styles={styles} />;
     case "divider":
       return <Hr key={section.id} style={{ borderColor: "#e8e8e8", margin: "8px 24px" }} />;
     case "custom-text":
@@ -123,26 +121,6 @@ function IntroSection({
   );
 }
 
-function HeadingSection({ section, styles }: { section: NewsletterSection; styles: NewsletterStyles }) {
-  const sizes: Record<number, string> = { 1: "26px", 2: "20px", 3: "16px" };
-  const level = section.props.level ?? 2;
-  return (
-    <Section style={{ padding: "20px 24px 4px" }}>
-      <Heading
-        as={`h${level}` as "h1" | "h2" | "h3"}
-        style={{
-          color: styles.textColor,
-          fontSize: sizes[level] ?? "20px",
-          fontWeight: "700",
-          margin: "0",
-          textAlign: (section.props.align as "left" | "center" | "right") ?? "left",
-        }}
-      >
-        {section.props.text ?? "Section"}
-      </Heading>
-    </Section>
-  );
-}
 
 function CustomTextSection({ section, styles }: { section: NewsletterSection; styles: NewsletterStyles }) {
   return (

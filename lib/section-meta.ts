@@ -11,7 +11,6 @@ export const SECTION_META: Record<SectionType, { label: string; icon: string; co
   "topic":          { label: "Topic",          icon: "🔍", color: "#0284C7", bg: "#f0f7ff" },
   "recent-gems":    { label: "Recent Gems",    icon: "💎", color: "#16A34A", bg: "#f0fdf4" },
   "high-signal":    { label: "High Signal",    icon: "📡", color: "#DC2626", bg: "#fff0f0" },
-  "heading":        { label: "Heading",         icon: "T",  color: "#6B7280", bg: "#f9fafb", structural: true },
   "divider":        { label: "Divider",         icon: "—",  color: "#9CA3AF", bg: "#f9fafb", structural: true },
   "custom-text":    { label: "Text Block",      icon: "P",  color: "#6B7280", bg: "#f9fafb", structural: true },
   "intro":          { label: "Intro",           icon: "I",  color: "#F59E0B", bg: "#fffbf0", structural: true },

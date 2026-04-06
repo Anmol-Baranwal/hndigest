@@ -144,7 +144,6 @@ Section types for add_section:
 - high-signal(minPoints?, count?): high-points stories sorted by score. minPoints default 200
 
 IMPORTANT: Do NOT pass count unless the user explicitly mentions a number. If count is not mentioned, omit it entirely — never pass 0, 1, or any value. The system defaults to 5 stories per section.
-- heading(text, level?): a section heading
 - divider: horizontal separator
 - custom-text(content): custom paragraph
 - intro(content): introductory text
@@ -157,17 +156,18 @@ CRITICAL RULES — follow exactly:
 1. NEVER call remove_section unless the user explicitly uses the word "remove", "delete", or "get rid of". Adding a new section never requires removing an existing one.
 2. Call add_section EXACTLY ONCE per user request. Do not call it multiple times for the same request.
 3. After completing the requested tool calls, stop immediately. Do not make additional tool calls.
-4. When moving a section "to the top", use reorder_sections — place it just below any intro/heading.
+4. When moving a section "to the top", use reorder_sections — place it just below any intro section.
 5. For topic sections: infer query and hours from natural language. "AI news this week" → query="AI", hours=168. "security today" → query="security", hours=24.
-6. Be concise. Confirm what you changed in one short sentence.`,
+6. Be concise. Confirm what you changed in one short sentence.
+7. NEVER add a section type that already exists in the newsletter (check existing section ids above). If the user asks to add a type that's already there, tell them it already exists and ask if they want something different.`,
   });
 
   useFrontendTool(
     {
       name: "add_section",
-      description: "Add a content section. Types: hn-stories, show-hn, hiring, open-source, most-commented, trending, ask-hn, topic (needs query+hours), recent-gems (needs hours+minPoints), high-signal (needs minPoints), heading, divider, custom-text, intro, footer.",
+      description: "Add a content section. Types: hn-stories, show-hn, hiring, open-source, most-commented, trending, ask-hn, topic (needs query+hours), recent-gems (needs hours+minPoints), high-signal (needs minPoints), divider, custom-text, intro, footer.",
       parameters: z.object({
-        type: z.enum(["hn-stories", "show-hn", "hiring", "open-source", "most-commented", "trending", "ask-hn", "topic", "recent-gems", "high-signal", "heading", "divider", "custom-text", "intro", "footer"]),
+        type: z.enum(["hn-stories", "show-hn", "hiring", "open-source", "most-commented", "trending", "ask-hn", "topic", "recent-gems", "high-signal", "divider", "custom-text", "intro", "footer"]),
         text: z.string().optional(),
         content: z.string().optional(),
         level: z.number().min(1).max(3).optional(),
