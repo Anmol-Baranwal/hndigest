@@ -2,6 +2,8 @@
 
 Build and receive your own Hacker News digest, delivered to your inbox on a schedule you choose. Built with [CopilotKit](https://github.com/CopilotKit/CopilotKit), [Resend](https://resend.com) and [QStash](https://upstash.com/docs/qstash/overall/getstarted).
 
+https://github.com/user-attachments/assets/07a37eb3-b0b6-4e3e-b347-4d6e017865a9
+
 ## What it does
 
 - **AI editor** - chat to build your digest. Add or remove sections, change colors, fonts, layout, and set your schedule.
