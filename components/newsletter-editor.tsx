@@ -158,8 +158,7 @@ CRITICAL RULES — follow exactly:
 3. After completing the requested tool calls, stop immediately. Do not make additional tool calls.
 4. When moving a section "to the top", use reorder_sections — place it just below any intro section.
 5. For topic sections: infer query and hours from natural language. "AI news this week" → query="AI", hours=168. "security today" → query="security", hours=24.
-6. Be concise. Confirm what you changed in one short sentence.
-7. NEVER add a section type that already exists in the newsletter (check existing section ids above). If the user asks to add a type that's already there, tell them it already exists and ask if they want something different.`,
+6. Be concise. Confirm what you changed in one short sentence.`,
   });
 
   useFrontendTool(
