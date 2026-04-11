@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { z } from "zod";
 import { NewsletterConfig, NewsletterSection, SectionType } from "../lib/types";
 import { ActivateModal } from "./activate-modal";
+import { Icons } from "./icons";
 import Link from "next/link";
 
 const SECTION_PALETTE = [
@@ -118,47 +119,63 @@ export function NewsletterEditor() {
 
   useAgentContext({
     description: "Instructions for the HN newsletter assistant",
-    value: `You are an expert newsletter designer helping build a Hacker News digest.
+    value: `You are a newsletter designer helping the user build a Hacker News digest. Be conversational and helpful — not robotic.
 
-Tools available:
-- add_section(type, ...params): add a content section
-- remove_section(id): remove a section by its id
-- update_section(id, props): edit an existing section
-- reorder_sections(ids[]): reorder all sections by providing new id order
-- update_style(primaryColor?, backgroundColor?, textColor?, headerStyle?, fontFamily?): change styling
-- set_hn_config(category?, count?): topstories | beststories | newstories | askstories | showstories, count 1-20
-- update_newsletter_title(title): rename the newsletter
+── WHAT THIS APP DOES ──
+Users chat with you to design a Hacker News newsletter. They pick sections (e.g. top stories, AI news, hiring), set a schedule, and you update the newsletter live. When they're happy, they activate it and it lands in their inbox automatically.
+
+── BEHAVIOR TABLE ──
+Greeting / "what is this?" / "what can you do?"  → explain the app in 2-3 sentences, ask what they want
+"What sections are available?"                    → list all section types with a short description each
+"What can I customize in [section]?"             → explain count + any section-specific params
+Style change (color, font, header)               → call update_style, confirm in one sentence
+Add a section                                    → call add_section ONCE, confirm in one sentence
+Remove / delete / get rid of                     → call remove_section, confirm in one sentence
+Reorder / move to top                            → call reorder_sections, confirm in one sentence
+Schedule change                                  → call set_schedule, confirm in one sentence
+Rename                                           → call update_newsletter_title, confirm in one sentence
+Multiple changes in one message                  → make all tool calls, confirm all in one sentence
+
+── TOOLS ──
+- add_section(type, ...params)
+- remove_section(id)
+- update_section(id, props)
+- reorder_sections(ids[])
+- update_style(primaryColor?, backgroundColor?, textColor?, headerStyle?, fontFamily?)
+- set_hn_config(category?, count?): topstories | beststories | newstories | askstories | showstories
+- update_newsletter_title(title)
 - set_schedule(frequency?, time?): daily | weekly | monthly, time HH:MM UTC
-- add_recipient(email): add an email recipient
 
-Section types for add_section:
-- hn-stories: top HN stories (uses hnConfig category and count)
+── SECTIONS ──
+All sections support count (default 5, max 30). Only pass count if user explicitly states a number.
+
+Content sections:
+- hn-stories: top HN stories
 - show-hn: Show HN projects
-- most-commented: stories with most comments
-- trending: combined upvotes + comments×2 score
 - ask-hn: top Ask HN questions
 - hiring: Who's Hiring thread
 - open-source: GitHub projects from Show HN
-- topic(query, hours?, count?): Algolia search by keyword. hours=24|48|168. Example: "AI news this week" → query="AI", hours=168
+- most-commented: stories with most comments
+- trending: stories ranked by upvotes + comments×2
+
+Dynamic sections (Algolia):
+- topic(query, hours?, count?): keyword search. hours=24|48|168. Infer from natural language — "AI news this week" → query="AI", hours=168
 - recent-gems(hours?, minPoints?, count?): recent stories above a points threshold. hours=24|48|168, minPoints default 50
-- high-signal(minPoints?, count?): high-points stories sorted by score. minPoints default 200
+- high-signal(minPoints?, count?): high-upvote stories sorted by score. minPoints default 200
 
-IMPORTANT: Do NOT pass count unless the user explicitly mentions a number. If count is not mentioned, omit it entirely — never pass 0, 1, or any value. The system defaults to 5 stories per section.
-- divider: horizontal separator
-- custom-text(content): custom paragraph
-- intro(content): introductory text
-- footer(content): footer text
+Structural (no data):
+- intro(content), footer(content), custom-text(content), divider
 
-Current newsletter: "${config.title}" · ${config.sections.length} sections · ${config.hnConfig.count} ${config.hnConfig.category} · ${config.schedule.frequency}
-Existing section ids: ${config.sections.map((s) => `${s.id}(${s.type}${s.props.query ? `:${s.props.query}` : ""})`).join(", ")}
+── CURRENT STATE ──
+Newsletter: "${config.title}" · ${config.sections.length} sections · ${config.schedule.frequency}
+Section ids: ${config.sections.map((s) => `${s.id}(${s.type}${s.props.query ? `:${s.props.query}` : ""})`).join(", ")}
 
-CRITICAL RULES — follow exactly:
-1. NEVER call remove_section unless the user explicitly uses the word "remove", "delete", or "get rid of". Adding a new section never requires removing an existing one.
-2. Call add_section EXACTLY ONCE per user request. Do not call it multiple times for the same request.
-3. After completing the requested tool calls, stop immediately. Do not make additional tool calls.
-4. When moving a section "to the top", use reorder_sections — place it just below any intro section.
-5. For topic sections: infer query and hours from natural language. "AI news this week" → query="AI", hours=168. "security today" → query="security", hours=24.
-6. Be concise. Confirm what you changed in one short sentence.`,
+── RULES ──
+1. NEVER call remove_section unless user says "remove", "delete", or "get rid of".
+2. Call add_section EXACTLY ONCE per request.
+3. Stop after completing tool calls — no extra calls.
+4. "Move to top" → use reorder_sections, place just below any intro section.
+5. Be concise. One short sentence to confirm what changed.`,
   });
 
   useFrontendTool(
@@ -170,7 +187,7 @@ CRITICAL RULES — follow exactly:
         text: z.string().optional(),
         content: z.string().optional(),
         level: z.number().min(1).max(3).optional(),
-        count: z.number().min(1).max(20).optional(),
+        count: z.number().min(1).max(30).optional(),
         query: z.string().optional().describe("For topic sections: the search keyword (e.g. 'AI', 'Rust', 'infrastructure')"),
         hours: z.number().optional().describe("Time window in hours: 24, 48, or 168 (week). For topic and recent-gems sections."),
         minPoints: z.number().optional().describe("Minimum points threshold. For recent-gems and high-signal sections."),
@@ -226,7 +243,7 @@ CRITICAL RULES — follow exactly:
         content: z.string().optional(),
         level: z.number().min(1).max(3).optional(),
         align: z.enum(["left", "center", "right"]).optional(),
-        count: z.number().min(1).max(20).optional(),
+        count: z.number().min(1).max(30).optional(),
         query: z.string().optional(),
         hours: z.number().optional(),
         minPoints: z.number().optional(),
@@ -283,7 +300,7 @@ CRITICAL RULES — follow exactly:
       description: "Configure HN stories: category (topstories|beststories|newstories|askstories|showstories), count (1-20).",
       parameters: z.object({
         category: z.enum(["topstories", "beststories", "newstories", "askstories", "showstories"]).optional(),
-        count: z.number().min(1).max(20).optional(),
+        count: z.number().min(1).max(30).optional(),
       }),
       handler: async ({ category, count }) => {
         setConfig((prev) => ({
@@ -399,12 +416,7 @@ CRITICAL RULES — follow exactly:
                   : "border-border text-subtle hover:border-[#ccc]"
               }`}
             >
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor">
-                <rect x="0" y="0" width="5.5" height="5.5" rx="1.2"/>
-                <rect x="7.5" y="0" width="5.5" height="5.5" rx="1.2"/>
-                <rect x="0" y="7.5" width="5.5" height="5.5" rx="1.2"/>
-                <rect x="7.5" y="7.5" width="5.5" height="5.5" rx="1.2"/>
-              </svg>
+              <Icons.grid />
             </button>
             {paletteOpen && (
               <>
@@ -471,10 +483,7 @@ CRITICAL RULES — follow exactly:
                 : "border-border text-label hover:border-[#ccc]"
             }`}
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-              <rect x="0" y="1" width="7" height="10" rx="1" opacity="0.4"/>
-              <rect x="8" y="1" width="4" height="10" rx="1"/>
-            </svg>
+            <Icons.sidebar />
             Preview
           </button>
           {!hasSchedule && (
@@ -514,10 +523,7 @@ CRITICAL RULES — follow exactly:
               className="text-placeholder hover:text-body transition-colors p-1 rounded"
               aria-label="Close preview"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="1" y1="1" x2="13" y2="13"/>
-                <line x1="13" y1="1" x2="1" y2="13"/>
-              </svg>
+              <Icons.close />
             </button>
           </div>
 

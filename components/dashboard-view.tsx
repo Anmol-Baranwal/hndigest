@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ScheduleRecord } from "../lib/types";
 import { SECTION_META } from "../lib/section-meta";
 import { TIMEZONES, localTimeToUtc, utcTimeToLocal, getTzAbbr } from "../lib/timezones";
+import { Icons } from "./icons";
 
 interface Props {
   email: string;
@@ -21,11 +22,7 @@ function normalizeTime(input: string): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-const chevron = (
-  <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-placeholder pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-  </svg>
-);
+const chevron = <Icons.chevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-placeholder pointer-events-none" />;
 
 const selectCls = "appearance-none border border-border rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:border-accent text-foreground bg-white";
 

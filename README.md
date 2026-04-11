@@ -1,85 +1,55 @@
 # HN Digest
 
-Build and receive your own Hacker News digest, delivered to your inbox on a schedule you choose. Built with [CopilotKit](https://github.com/CopilotKit/CopilotKit), [Resend](https://resend.com) and [QStash](https://upstash.com/docs/qstash/overall/getstarted).
+Chat with an AI to build your own Hacker News newsletter. Tell it which sections you want, see your digest update live with real HN data, send a test email, and activate with a magic link.
 
 https://github.com/user-attachments/assets/07a37eb3-b0b6-4e3e-b347-4d6e017865a9
 
-## What it does
+No signup required. Build and preview for free. You only need a [Resend](https://resend.com) API key when you're ready to activate — they give 3,000 free emails per month.
 
-- **AI editor** - chat to build your digest. Add or remove sections, change colors, fonts, layout, and set your schedule.
-- **10+ section types** - top stories, topic search, Ask HN, hiring threads, recent gems, trending, and more.
-- **Live preview** - rendered with real HN data as you edit.
-- **Scheduled delivery** - daily, weekly, or monthly at your exact time and timezone. Activated via magic link, no password needed.
-- **Your own Resend key** - digests are sent from your own account. Encrypted with AES-256-GCM, decrypted only at send time, never exposed to the browser.
+## Sections
 
-## Getting started
+Every section supports a `count` parameter (default 5, max 20).
 
-### Accounts you'll need
-
-| Service | What for |
-|---|---|
-| [OpenAI](https://platform.openai.com) | AI editor (CopilotKit) |
-| [Upstash](https://upstash.com) | QStash — per-user digest scheduling |
-| [Resend](https://resend.com) | Optional fallback for magic link emails — users bring their own key for digest sends |
-
-> **Database**: Deploy to Vercel and add the [Neon integration](https://vercel.com/integrations/neon) — `POSTGRES_URL` is auto-injected. For local dev, create a free DB at [neon.tech](https://neon.tech).
-
-### 1. Clone and install
-
-```bash
-git clone https://github.com/Anmol-Baranwal/hndigest.git
-cd hndigest
-npm install   # or pnpm install / yarn
-```
-
-### 2. Set up environment variables
-
-```bash
-cp .env.example .env.local
-```
-
-| Variable | Required | Description |
+| Section | What it shows | Extra options |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes | Powers the CopilotKit AI agent |
-| `POSTGRES_URL` | Yes | Neon Postgres — auto-set by Vercel integration |
-| `QSTASH_TOKEN` | Yes | From [console.upstash.com](https://console.upstash.com) → QStash |
-| `RESEND_API_KEY` | No | Fallback for magic link emails — users provide their own key at activation |
-| `JWT_SECRET` | Prod | Any long random string for signing session tokens |
-| `ENCRYPTION_SECRET` | Prod | 32-char key for encrypting stored Resend keys |
-| `CRON_SECRET` | Prod | Protects `/api/send` from unauthorized calls |
-| `NEXT_PUBLIC_BASE_URL` | Prod | Your deployed URL — used in magic links and QStash callbacks |
+| `hn-stories` | Top HN stories | — |
+| `show-hn` | Show HN projects | — |
+| `ask-hn` | Top Ask HN questions | — |
+| `hiring` | Who's Hiring thread entries | — |
+| `open-source` | GitHub projects from Show HN | — |
+| `most-commented` | Stories with most comments | — |
+| `trending` | Stories ranked by upvotes + comments | — |
+| `topic` | Algolia keyword search | `query`, `hours` (24/48/168) |
+| `recent-gems` | Recent stories above a points threshold | `hours` (24/48/168), `minPoints` (default 50) |
+| `high-signal` | High-upvote stories, sorted by score | `minPoints` (default 200) |
+| `custom-text` | Any text block | — |
+| `intro` | Intro paragraph at the top | — |
+| `footer` | Footer at the bottom | — |
+| `divider` | Horizontal separator | — |
 
-In development, `JWT_SECRET` and `ENCRYPTION_SECRET` are auto-generated on first run and saved to `.env.local` — you don't need to set them. `CRON_SECRET` is optional in dev (the check is skipped if unset). Without `QSTASH_TOKEN`, scheduling is skipped gracefully.
+## Example prompts
 
-### 3. Run locally
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000), go to the editor, build your digest, and hit Activate.
-
-## Deploying to Vercel
-
-1. Push to GitHub and import the repo in Vercel.
-2. Add the [Neon integration](https://vercel.com/integrations/neon) — sets `POSTGRES_URL` automatically.
-3. Add `OPENAI_API_KEY`, `QSTASH_TOKEN`, `CRON_SECRET`, `ENCRYPTION_SECRET`, `JWT_SECRET`, and `NEXT_PUBLIC_BASE_URL` in the Vercel dashboard.
-
-## Docs
-
-- [Architecture](docs/architecture.md) — system design, data flow, security model
-- [Self-hosting](docs/self-host.md) — step-by-step setup guide
+| Prompt | What happens |
+|---|---|
+| "Add AI news from the last 48 hours" | Topic section, query="AI", hours=48 |
+| "Show HN with 7 stories" | Show HN section, count=7 |
+| "Add a hiring section" | Pulls latest Who's Hiring thread |
+| "Add recent gems with 150+ points from this week" | recent-gems, minPoints=150, hours=168 |
+| "Make it weekly on Mondays at 9am EST" | Sets schedule with timezone |
+| "Dark header, serif font" | Updates colors and typography |
+| "Add Ask HN and remove the divider" | Adds one section, removes another |
+| "Move top stories to the top" | Reorders sections |
+| "What sections can I add?" | AI lists all available section types |
 
 ## Stack
 
-| Layer | Tech |
-|---|---|
-| Framework | Next.js (App Router) |
-| AI agent | CopilotKit + OpenAI |
-| Email | Resend + React Email |
-| Database | Neon (Postgres) |
-| HN data | Firebase HN API + Algolia HN API |
-| Scheduling | Upstash QStash |
+[Next.js](https://nextjs.org) as the framework, [CopilotKit](https://github.com/CopilotKit/CopilotKit) for the AI chat editor, [Resend](https://resend.com) + [React Email](https://react.email) for email delivery, [Neon](https://neon.tech) for the database, [Upstash QStash](https://upstash.com/docs/qstash/overall/getstarted) for per-user scheduling, and [Firebase HN API](https://github.com/HackerNews/API) + [Algolia](https://hn.algolia.com/api) for live HN data.
+
+## Docs
+
+- [Running locally](docs/running-locally.md)
+- [Self-hosting](docs/self-host.md)
+- [Architecture](docs/architecture.md)
 
 ## License
 

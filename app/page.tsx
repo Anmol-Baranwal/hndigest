@@ -1,4 +1,12 @@
 import Link from "next/link";
+import { Icons } from "@/components/icons";
+import {
+  SECTION_CARDS,
+  PREVIEW_STORIES,
+  SCHEDULE_OPTIONS,
+  DASHBOARD_ROWS,
+  SECURITY_FEATURES,
+} from "@/lib/data";
 
 export default function LandingPage() {
   return (
@@ -25,22 +33,15 @@ export default function LandingPage() {
 
       <section className="max-w-6xl mx-auto px-8 pt-20 pb-24">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 text-sm text-muted bg-card border border-border rounded-full px-4 py-2 mb-8">
-            <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block" />
-            Powered by{" "}
-            <a href="https://github.com/CopilotKit/copilotkit?ref=hn-digest" target="_blank" rel="noopener noreferrer" className="text-foreground font-medium hover:underline">CopilotKit</a>
-            {" "}+{" "}
-            <a href="https://resend.com?ref=hn-digest" target="_blank" rel="noopener noreferrer" className="text-foreground font-medium hover:underline">Resend</a>
-          </div>
           <h1 className="font-serif text-6xl text-foreground leading-[1.1] mb-6">
             Your HN digest,
             <br />
             <em>designed by you.</em>
           </h1>
           <p className="text-lg text-muted leading-relaxed max-w-xl mb-10">
-            Chat with AI to build a beautiful Hacker News newsletter. Pick the
-            stories, set the style, schedule the delivery. No templates, no
-            drag-and-drop. Just describe what you want.
+            Tell the AI which sections you want: top stories, hiring, AI news,
+            Show HN, and more. See your digest update live with real HN data.
+            Activate with a magic link, get it in your inbox on your schedule.
           </p>
           <div className="flex items-center gap-4 flex-wrap">
             <Link
@@ -69,22 +70,6 @@ export default function LandingPage() {
             font&rdquo;. The AI updates your newsletter live. No menus, no
             config panels.
           </p>
-          <ul className="space-y-3">
-            {[
-              "Add, remove, and reorder sections",
-              "Change colors, fonts, and layout",
-              "Configure HN categories and story count",
-              "Set your send schedule",
-            ].map((item) => (
-              <li
-                key={item}
-                className="flex items-center gap-3 text-sm text-label"
-              >
-                <span className="w-1.5 h-1.5 bg-accent rounded-full flex-shrink-0 inline-block" />
-                {item}
-              </li>
-            ))}
-          </ul>
         </div>
         <div className="bg-card rounded-2xl p-6 flex flex-col gap-3">
           <ChatBubble
@@ -112,11 +97,7 @@ export default function LandingPage() {
             <div className="text-lg font-semibold mb-1">Weekly HN Digest</div>
             <div className="text-sm opacity-75">Your curated Hacker News digest</div>
           </div>
-          {[
-            { n: 1, title: "Show HN: I built a tool that writes emails for me", points: 847 },
-            { n: 2, title: "The unreasonable effectiveness of simple ideas", points: 621 },
-            { n: 3, title: "Ask HN: What are you working on this month?", points: 512 },
-          ].map((s) => (
+          {PREVIEW_STORIES.map((s) => (
             <div
               key={s.n}
               className="flex gap-3 bg-[#2a2a2a] rounded-lg p-4"
@@ -148,6 +129,29 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="border-t border-border">
+        <div className="max-w-6xl mx-auto px-8 py-24">
+          <div className="mb-12">
+            <div className="inline-block text-xs text-muted bg-card border border-border rounded-full px-3 py-1 mb-4">
+              Sections
+            </div>
+            <h2 className="font-serif text-5xl text-foreground mb-3">10+ section types.</h2>
+            <p className="text-muted text-base max-w-xl">Mix and match. Each section pulls live data from HN at send time.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border rounded-2xl overflow-hidden border border-border">
+            {SECTION_CARDS.map((s) => (
+              <div key={s.label} className="bg-background px-6 py-5 flex items-start gap-4">
+                <span className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+                <div>
+                  <div className="text-sm font-medium text-foreground mb-0.5">{s.label}</div>
+                  <div className="text-sm text-muted">{s.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="max-w-6xl mx-auto px-8 py-24 grid grid-cols-1 md:grid-cols-2 gap-16 items-center border-t border-border">
         <div>
           <div className="inline-block text-xs text-muted bg-card border border-border rounded-full px-3 py-1 mb-6">
@@ -164,11 +168,7 @@ export default function LandingPage() {
             from your dashboard.
           </p>
           <div className="grid grid-cols-3 gap-4">
-            {[
-              { label: "Daily", desc: "Every morning" },
-              { label: "Weekly", desc: "Your pick of day" },
-              { label: "Monthly", desc: "1st of the month" },
-            ].map((item) => (
+            {SCHEDULE_OPTIONS.map((item) => (
               <div key={item.label} className="bg-card rounded-xl p-4">
                 <div className="text-sm font-semibold text-foreground mb-1">
                   {item.label}
@@ -188,12 +188,7 @@ export default function LandingPage() {
             </span>
           </div>
           <div className="space-y-3">
-            {[
-              { label: "Frequency", value: "Weekly · Monday 8:00 AM" },
-              { label: "Recipients", value: "you@example.com" },
-              { label: "Stories", value: "Top 5 · topstories" },
-              { label: "Last sent", value: "Mon, Mar 28 · 8:01 AM" },
-            ].map((row) => (
+            {DASHBOARD_ROWS.map((row) => (
               <div key={row.label} className="flex justify-between text-sm">
                 <span className="text-subtle">{row.label}</span>
                 <span className="text-foreground font-medium">{row.value}</span>
@@ -220,50 +215,18 @@ export default function LandingPage() {
             <h2 className="font-serif text-4xl text-foreground">Your keys, always yours.</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {[
-              {
-                icon: (
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="4" y="9" width="12" height="9" rx="2"/>
-                    <path d="M7 9V6a3 3 0 0 1 6 0v3"/>
-                  </svg>
-                ),
-                title: "Encrypted at rest",
-                body: "Your Resend API key is encrypted with AES-256-GCM before being stored. The encryption key never leaves your server.",
-              },
-              {
-                icon: (
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5z"/>
-                    <circle cx="10" cy="10" r="2.5"/>
-                    <line x1="3" y1="3" x2="17" y2="17"/>
-                  </svg>
-                ),
-                title: "Never exposed",
-                body: "Your key is decrypted only at send time, in memory, on the server. It is never returned to the browser or logged.",
-              },
-              {
-                icon: (
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 6 5 6 17 6"/>
-                    <path d="M8 6V4h4v2"/>
-                    <path d="M5 6l1 11a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-11"/>
-                    <line x1="9" y1="10" x2="9" y2="14"/>
-                    <line x1="11" y1="10" x2="11" y2="14"/>
-                  </svg>
-                ),
-                title: "Delete anytime",
-                body: "Deleting your newsletter immediately wipes your encrypted key and all stored configuration from our servers.",
-              },
-            ].map((item) => (
+            {SECURITY_FEATURES.map((item, i) => {
+              const Icon = [Icons.lock, Icons.eyeOff, Icons.trash][i];
+              return (
               <div key={item.title} className="bg-white border border-border rounded-2xl p-6">
                 <div className="w-10 h-10 rounded-xl bg-card flex items-center justify-center text-foreground mb-4">
-                  {item.icon}
+                  <Icon />
                 </div>
                 <h3 className="text-sm font-semibold text-foreground mb-2">{item.title}</h3>
                 <p className="text-sm text-muted leading-relaxed">{item.body}</p>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -309,9 +272,7 @@ export default function LandingPage() {
             rel="noopener noreferrer"
             className="flex items-center gap-3 bg-white text-foreground px-6 py-3.5 rounded-full text-sm font-medium hover:bg-card transition-colors flex-shrink-0"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
-            </svg>
+            <Icons.GitHub width={18} height={18} />
             Star on GitHub
           </a>
         </div>
