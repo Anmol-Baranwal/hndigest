@@ -63,8 +63,6 @@ function renderSection(
       return <IntroSection key={section.id} section={section} styles={styles} title={title} />;
     case "divider":
       return <Hr key={section.id} style={{ borderColor: "#e8e8e8", margin: "8px 24px" }} />;
-    case "custom-text":
-      return <CustomTextSection key={section.id} section={section} styles={styles} />;
     case "footer":
       return <FooterSection key={section.id} section={section} />;
 
@@ -122,15 +120,6 @@ function IntroSection({
 }
 
 
-function CustomTextSection({ section, styles }: { section: NewsletterSection; styles: NewsletterStyles }) {
-  return (
-    <Section style={{ padding: "8px 24px" }}>
-      <Text style={{ color: styles.textColor, fontSize: "15px", lineHeight: "1.7", margin: "0" }}>
-        {section.props.content ?? ""}
-      </Text>
-    </Section>
-  );
-}
 
 function FooterSection({ section }: { section: NewsletterSection }) {
   return (
@@ -145,16 +134,17 @@ function FooterSection({ section }: { section: NewsletterSection }) {
 function EmailFooter({ unsubscribeUrl }: { unsubscribeUrl?: string }) {
   return (
     <Section style={{ borderTop: "1px solid #ebebeb", padding: "20px 24px 0", marginTop: "16px" }}>
-      <Text style={{ color: "#bbb", fontSize: "11px", textAlign: "center", margin: "0 0 6px", lineHeight: "1.6" }}>
-        <Link href="https://github.com/Anmol-Baranwal/hndigest" style={{ color: "#bbb" }}>
+      <Text style={{ color: "#666", fontSize: "11px", textAlign: "center", margin: "0 0 6px", lineHeight: "1.6" }}>
+        <Link href="https://github.com/Anmol-Baranwal/hndigest" style={{ color: "#555" }}>
           ⭐ Star HN Digest on GitHub
         </Link>
         {unsubscribeUrl && (
           <>
             {" · "}
-            <Link href={unsubscribeUrl} style={{ color: "#bbb" }}>
-              Unsubscribe
-            </Link>
+            {unsubscribeUrl === "#"
+              ? <span style={{ color: "#666" }}>Unsubscribe</span>
+              : <Link href={unsubscribeUrl} style={{ color: "#666" }}>Unsubscribe</Link>
+            }
           </>
         )}
       </Text>
@@ -400,7 +390,7 @@ function AskHNSection({ stories, styles }: { stories: HNStory[]; styles: Newslet
 function TopicSection({ section, stories, styles }: { section: NewsletterSection; stories: HNStory[]; styles: NewsletterStyles }) {
   if (stories.length === 0) return null;
   const label = section.props.query ?? "Topic";
-  const window = section.props.hours === 168 ? "this week" : section.props.hours === 48 ? "last 48h" : "last 24h";
+  const window = formatHoursLabel(section.props.hours);
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
       <SectionLabel text={`${label} · ${window}`} color={styles.primaryColor} />
@@ -426,10 +416,9 @@ function TopicSection({ section, stories, styles }: { section: NewsletterSection
 
 function RecentGemsSection({ section, stories, styles }: { section: NewsletterSection; stories: HNStory[]; styles: NewsletterStyles }) {
   if (stories.length === 0) return null;
-  const window = section.props.hours === 48 ? "last 48h" : "last 24h";
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
-      <SectionLabel text={`Recent Gems · ${window}`} color={styles.primaryColor} />
+      <SectionLabel text={`Recent Gems · ${formatHoursLabel(section.props.hours)}`} color={styles.primaryColor} />
       {stories.map((story, i) => (
         <Row key={story.id} style={{ marginBottom: "2px" }}>
           <Column style={{ width: "36px", verticalAlign: "top", paddingTop: "14px" }}>
@@ -467,7 +456,7 @@ function HighSignalSection({ section, stories, styles }: { section: NewsletterSe
 
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
-      <SectionLabel text={`High Signal · ${minPts}+ pts`} color={styles.primaryColor} />
+      <SectionLabel text={`High Signal · ${minPts}+ upvotes`} color={styles.primaryColor} />
       {stories.map((story, i) => (
         <Section
           key={story.id}
@@ -540,6 +529,14 @@ function TrendingSection({ stories, styles }: { stories: HNStory[]; styles: News
       </Section>
     </Section>
   );
+}
+
+function formatHoursLabel(hours?: number): string {
+  if (!hours || hours <= 0) return "last 24h";
+  if (hours < 24) return `last ${hours}h`;
+  const days = Math.round(hours / 24);
+  if (days === 7) return "this week";
+  return `last ${days}d`;
 }
 
 function SectionLabel({ text, color }: { text: string; color: string }) {

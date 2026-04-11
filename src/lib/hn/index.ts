@@ -146,7 +146,7 @@ export async function fetchNewsletterData(config: NewsletterConfig): Promise<New
         break;
       case "high-signal":
         fetches.push(
-          fetchHighSignal(count ?? 5, section.props.minPoints ?? 200)
+          fetchHighSignal(count ?? 5, section.props.minPoints ?? 200, section.props.hours ?? 720)
             .then((s) => { data.sectionData = { ...data.sectionData, [section.id]: s }; })
         );
         break;
