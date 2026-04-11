@@ -1,6 +1,6 @@
 "use client";
 
-import { useAgentContext, useFrontendTool, useAgent, useCopilotKit, CopilotChat } from "@copilotkit/react-core/v2";
+import { useAgentContext, useFrontendTool, useAgent, useCopilotKit, CopilotChat, ToolCallStatus } from "@copilotkit/react-core/v2";
 import "@copilotkit/react-core/v2/styles.css";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { z } from "zod";
@@ -18,12 +18,12 @@ const SECTION_PALETTE = [
   { type: "trending",       icon: "📈", label: "Trending",         desc: "Combined upvotes + discussion score" },
   { type: "ask-hn",        icon: "❓", label: "Ask HN",            desc: "Top community questions" },
   { type: "topic",         icon: "🔍", label: "Topic",             desc: "Stories by keyword (AI, Rust, etc.)" },
-  { type: "recent-gems",   icon: "💎", label: "Recent Gems",       desc: "New stories with high points" },
-  { type: "high-signal",   icon: "📡", label: "High Signal",       desc: "High points, low comments" },
+  { type: "recent-gems",   icon: "💎", label: "Recent Gems",       desc: "New stories with high upvotes" },
+  { type: "high-signal",   icon: "📡", label: "High Signal",       desc: "High upvotes, low comments" },
 ] as const;
 
 const PROMPT_SUGGESTIONS = [
-  "Add AI news from the last 48 hours + high signal stories with 200+ points",
+  "Add AI news from the last 48 hours + high signal stories with 200+ upvotes",
   "Top stories + recent gems from last 24h + who's hiring, daily at 9am",
   "Most discussed + Ask HN + open source projects, weekly on Fridays",
 ];
@@ -53,6 +53,8 @@ export function NewsletterEditor() {
   const [previewHtml, setPreviewHtml] = useState<string>("");
   const previewPaneRef = useRef<HTMLDivElement>(null);
   const isInitialPreviewRef = useRef(true);
+  const previewCacheRef = useRef<Map<string, string>>(new Map());
+  const [configLoading, setConfigLoading] = useState(true);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [showActivate, setShowActivate] = useState(false);
@@ -60,6 +62,7 @@ export function NewsletterEditor() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"" | "saved" | "error">("");
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [sectionsOpen, setSectionsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { agent } = useAgent();
   const { copilotkit } = useCopilotKit();
@@ -82,7 +85,8 @@ export function NewsletterEditor() {
           setHasSchedule(true);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setConfigLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -111,6 +115,42 @@ export function NewsletterEditor() {
     }
   };
 
+  const deleteSection = useCallback((id: string) => {
+    setConfig((prev) => {
+      const idx = prev.sections.findIndex(s => s.id === id);
+      if (idx === -1) return prev;
+
+      let sections = [...prev.sections];
+      sections.splice(idx, 1);
+
+      // Loop until stable — removing one divider can expose another orphan
+      let prevLen = -1;
+      while (sections.length !== prevLen) {
+        prevLen = sections.length;
+        sections = sections.filter((s, i, arr) => {
+          if (s.type !== "divider") return true;
+          const before = arr[i - 1];
+          const after = arr[i + 1];
+          if (!before || before.type === "intro") return false;
+          if (!after || after.type === "footer") return false;
+          if (before.type === "divider") return false;
+          const hasContentAfter = arr.slice(i + 1).some(x => !["divider", "footer", "intro"].includes(x.type));
+          if (!hasContentAfter) return false;
+          return true;
+        });
+      }
+
+      if (hasSchedule) {
+        fetch("/api/schedule", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sections }),
+        }).catch(() => {});
+      }
+      return { ...prev, sections };
+    });
+  }, [hasSchedule]);
+
   useAgentContext({
     description:
       "Current newsletter config. sections = content blocks, styles = appearance, hnConfig = which HN stories, schedule = when to send.",
@@ -119,80 +159,94 @@ export function NewsletterEditor() {
 
   useAgentContext({
     description: "Instructions for the HN newsletter assistant",
-    value: `You are a newsletter designer helping the user build a Hacker News digest. Be conversational and helpful — not robotic.
+    value: `You are a friendly assistant that helps users build a Hacker News email digest. Be conversational, helpful, and human. You always respond, no matter what the user says.
 
 ── WHAT THIS APP DOES ──
-Users chat with you to design a Hacker News newsletter. They pick sections (e.g. top stories, AI news, hiring), set a schedule, and you update the newsletter live. When they're happy, they activate it and it lands in their inbox automatically.
+HN Digest lets users build a personalized Hacker News newsletter delivered to their inbox. They chat with you to design it: pick sections (top stories, AI news, hiring, etc.), set filters like count, time window, and upvote threshold, choose a schedule, and customize the style. When ready, they activate with a magic link.
 
-── BEHAVIOR TABLE ──
-Greeting / "what is this?" / "what can you do?"  → explain the app in 2-3 sentences, ask what they want
-"What sections are available?"                    → list all section types with a short description each
-"What can I customize in [section]?"             → explain count + any section-specific params
+── HOW TO RESPOND ──
+Greeting / casual message                        → respond naturally, briefly explain what you can help with
+"what is this?" / "what is this project?"        → explain HN Digest in 2-3 sentences, ask what they'd like to build
+"what can you do?" / "help"                      → list what you can help with (sections, filters, schedule, style)
+"what sections are available?" / "what can I add?" → call show_available_sections (renders a visual card grid)
+"what can I customize in [section]?"             → explain count + that section's specific params
 Style change (color, font, header)               → call update_style, confirm in one sentence
-Add a section                                    → call add_section ONCE, confirm in one sentence
-Remove / delete / get rid of                     → call remove_section, confirm in one sentence
-Reorder / move to top                            → call reorder_sections, confirm in one sentence
-Schedule change                                  → call set_schedule, confirm in one sentence
-Rename                                           → call update_newsletter_title, confirm in one sentence
+Add a section                                    → CHECK EXISTING SECTIONS FIRST (see rules), then call add_section once
+Remove / delete / get rid of                     → call remove_section with the correct id from Section ids list
+Reorder / move to top                            → call reorder_sections
+Schedule change                                  → call set_schedule
+Rename                                           → call update_newsletter_title
+Change count / hours / upvotes on existing       → call update_section with the correct id, NOT add_section
 Multiple changes in one message                  → make all tool calls, confirm all in one sentence
+Off-topic / confusing / anything else            → respond helpfully and naturally
 
-── TOOLS ──
-- add_section(type, ...params)
-- remove_section(id)
-- update_section(id, props)
-- reorder_sections(ids[])
-- update_style(primaryColor?, backgroundColor?, textColor?, headerStyle?, fontFamily?)
-- set_hn_config(category?, count?): topstories | beststories | newstories | askstories | showstories
-- update_newsletter_title(title)
-- set_schedule(frequency?, time?): daily | weekly | monthly, time HH:MM UTC
+── CURRENT SECTIONS (always check before adding) ──
+Newsletter: "${config.title}" · ${config.schedule.frequency}
+${config.sections.map((s, i) => `  ${i + 1}. id="${s.id}" type=${s.type}${s.props.query ? ` query="${s.props.query}"` : ""}${s.props.count ? ` count=${s.props.count}` : ""}${s.props.hours ? ` hours=${s.props.hours}` : ""}${s.props.minPoints ? ` minPoints=${s.props.minPoints}` : ""}`).join("\n")}
 
-── SECTIONS ──
-All sections support count (default 5, max 30). Only pass count if user explicitly states a number.
+── DUPLICATE RULES (critical — read before every add_section call) ──
+SINGLETON types (only ONE allowed): hn-stories, show-hn, ask-hn, hiring, open-source, most-commented, trending, intro, footer.
+- If user asks to add a singleton type that ALREADY EXISTS in the list above → call update_section on the existing one instead, or tell the user it's already there.
+- If user wants to change count/hours/upvotes on an existing section → ALWAYS call update_section, never add a new one.
 
-Content sections:
-- hn-stories: top HN stories
-- show-hn: Show HN projects
-- ask-hn: top Ask HN questions
-- hiring: Who's Hiring thread
-- open-source: GitHub projects from Show HN
-- most-commented: stories with most comments
-- trending: stories ranked by upvotes + comments×2
+MULTI-INSTANCE types (multiple allowed with different params): topic, recent-gems, high-signal, divider.
+- topic: OK to add multiple if query is different. If same query exists → update_section instead.
+- recent-gems / high-signal: OK to add multiple only if params meaningfully differ. Otherwise update existing.
 
-Dynamic sections (Algolia):
-- topic(query, hours?, count?): keyword search. hours=24|48|168. Infer from natural language — "AI news this week" → query="AI", hours=168
-- recent-gems(hours?, minPoints?, count?): recent stories above a points threshold. hours=24|48|168, minPoints default 50
-- high-signal(minPoints?, count?): high-upvote stories sorted by score. minPoints default 200
+── SECTION REFERENCE ──
+Standard sections (no filter params needed — just add with type, optionally count):
+  hn-stories     → top HN front page stories
+  show-hn        → Show HN projects
+  ask-hn         → top Ask HN questions (fetched from last 7 days)
+  hiring         → Who's Hiring thread entries
+  open-source    → GitHub projects from Show HN
+  most-commented → stories sorted by comment count
+  trending       → ranked by upvotes + comments combined
 
-Structural (no data):
-- intro(content), footer(content), custom-text(content), divider
+Filtered sections (always provide these defaults if user doesn't specify):
+  topic          → REQUIRED: query (keyword string). DEFAULT hours=48. count optional.
+                   Example: add_section(type="topic", query="AI", hours=48)
+                   If user says "add topic" without a keyword → ask "What topic should I search for?"
+  recent-gems    → recent stories above an upvote threshold. DEFAULT hours=48, minPoints=50. count optional.
+                   Example: add_section(type="recent-gems", hours=48, minPoints=50)
+  high-signal    → high-upvote stories sorted by score. DEFAULT minPoints=200, hours=720. count optional.
+                   Example: add_section(type="high-signal", minPoints=200, hours=720)
 
-── CURRENT STATE ──
-Newsletter: "${config.title}" · ${config.sections.length} sections · ${config.schedule.frequency}
-Section ids: ${config.sections.map((s) => `${s.id}(${s.type}${s.props.query ? `:${s.props.query}` : ""})`).join(", ")}
+hours values: 24=1day, 48=2days, 72=3days, 96=4days, 120=5days, 144=6days, 168=1week, 336=2weeks, 480=20days, 720=30days.
+Infer from natural language: "last week" → 168, "last 3 days" → 72, "this month" → 720, "last 2 days" → 48.
+
+Structural:
+  intro   → intro text at top. props: content (string).
+  footer  → footer text at bottom. props: content (string).
+  divider → visual separator, no props.
 
 ── RULES ──
-1. NEVER call remove_section unless user says "remove", "delete", or "get rid of".
-2. Call add_section EXACTLY ONCE per request.
-3. Stop after completing tool calls — no extra calls.
-4. "Move to top" → use reorder_sections, place just below any intro section.
-5. Be concise. One short sentence to confirm what changed.`,
+1. BEFORE calling add_section: scan the current sections list above. If the type is a singleton and already exists, call update_section or inform the user instead.
+2. Call add_section EXACTLY ONCE per new section. Exception: inserting multiple dividers between existing sections.
+3. A divider is automatically inserted before every new content section — you do NOT need to add it manually.
+4. NEVER call remove_section unless user says "remove", "delete", or "get rid of". Use the exact id from the sections list.
+5. For filtered sections (topic, recent-gems, high-signal): always include default props even if user doesn't specify — never add them with empty props.
+6. "Move to top" → reorder_sections, place just after any intro.
+7. Stop after completing tool calls. One short sentence to confirm what changed.
+8. Never refuse. If unclear, ask one short clarifying question.`,
   });
 
   useFrontendTool(
     {
       name: "add_section",
-      description: "Add a content section. Types: hn-stories, show-hn, hiring, open-source, most-commented, trending, ask-hn, topic (needs query+hours), recent-gems (needs hours+minPoints), high-signal (needs minPoints), divider, custom-text, intro, footer.",
+      description: "Add a content section. Types: hn-stories, show-hn, hiring, open-source, most-commented, trending, ask-hn, topic (needs query+hours), recent-gems (needs hours+minPoints), high-signal (needs minPoints), divider, intro, footer.",
       parameters: z.object({
-        type: z.enum(["hn-stories", "show-hn", "hiring", "open-source", "most-commented", "trending", "ask-hn", "topic", "recent-gems", "high-signal", "divider", "custom-text", "intro", "footer"]),
+        type: z.enum(["hn-stories", "show-hn", "hiring", "open-source", "most-commented", "trending", "ask-hn", "topic", "recent-gems", "high-signal", "divider", "intro", "footer"]),
         text: z.string().optional(),
         content: z.string().optional(),
         level: z.number().min(1).max(3).optional(),
         count: z.number().min(1).max(30).optional(),
         query: z.string().optional().describe("For topic sections: the search keyword (e.g. 'AI', 'Rust', 'infrastructure')"),
         hours: z.number().optional().describe("Time window in hours: 24, 48, or 168 (week). For topic and recent-gems sections."),
-        minPoints: z.number().optional().describe("Minimum points threshold. For recent-gems and high-signal sections."),
+        minPoints: z.number().optional().describe("Minimum upvotes threshold. For recent-gems and high-signal sections."),
       }),
       handler: async ({ type, text, content, level, count, query, hours, minPoints }) => {
+        const SINGLETON_TYPES = ["hn-stories", "show-hn", "hiring", "open-source", "most-commented", "trending", "ask-hn", "intro", "footer"];
         const section: NewsletterSection = {
           id: `${type}-${Date.now()}`,
           type: type as SectionType,
@@ -206,14 +260,27 @@ Section ids: ${config.sections.map((s) => `${s.id}(${s.type}${s.props.query ? `:
             ...(minPoints !== undefined && { minPoints }),
           },
         };
+        const isContent = !["divider", "intro", "footer"].includes(type);
+        let blocked = false;
         setConfig((prev) => {
-          // Insert before footer/divider-at-end so new sections don't go after the footer
+          if (SINGLETON_TYPES.includes(type) && prev.sections.some(s => s.type === type)) {
+            blocked = true;
+            return prev;
+          }
           const sections = [...prev.sections];
           const footerIdx = sections.findLastIndex(s => s.type === "footer");
-          if (footerIdx !== -1) sections.splice(footerIdx, 0, section);
-          else sections.push(section);
+          const insertIdx = footerIdx !== -1 ? footerIdx : sections.length;
+          if (isContent) {
+            const prevSection = sections[insertIdx - 1];
+            if (prevSection && prevSection.type !== "divider" && prevSection.type !== "intro") {
+              sections.splice(insertIdx, 0, { id: `divider-${Date.now() + 1}`, type: "divider", props: {} }, section);
+              return { ...prev, sections };
+            }
+          }
+          sections.splice(insertIdx, 0, section);
           return { ...prev, sections };
         });
+        if (blocked) return `Skipped: ${type} section already exists. Use update_section to modify it instead.`;
         return `Added ${type} section`;
       },
     },
@@ -358,8 +425,63 @@ Section ids: ${config.sections.map((s) => `${s.id}(${s.type}${s.props.query ? `:
     [setConfig]
   );
 
+  useFrontendTool(
+    {
+      name: "show_available_sections",
+      description: "Show a visual overview of all available section types. Call this when the user asks what sections are available, what they can add, or wants to browse section options.",
+      parameters: z.object({}),
+      handler: async () => "Showing available sections.",
+      render: ({ status }) => {
+        if (status === ToolCallStatus.Executing) {
+          return (
+            <div className="mt-2 grid grid-cols-2 gap-1.5 animate-pulse">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-14 bg-gray-100 rounded-xl" />
+              ))}
+            </div>
+          );
+        }
+        const FILTERABLE = new Set(["topic", "recent-gems", "high-signal"]);
+        return (
+          <div className="mt-2 space-y-2">
+            <p className="text-[11px] text-gray-400 uppercase tracking-wider font-medium">10 section types</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {SECTION_PALETTE.map(({ type, icon, label, desc }) => (
+                <div
+                  key={type}
+                  className="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100 hover:border-gray-200 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-sm">{icon}</span>
+                      <span className="text-[12px] font-semibold text-gray-800">{label}</span>
+                    </span>
+                    {FILTERABLE.has(type) && (
+                      <span className="text-[9px] font-medium text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-full border border-orange-100">filter</span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-gray-400 leading-snug">{desc}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-gray-400">Just tell me what to add — I&apos;ll handle the rest.</p>
+          </div>
+        );
+      },
+    },
+    []
+  );
+
   const refreshPreview = useCallback(async () => {
+    const cacheKey = JSON.stringify(config);
+    const cached = previewCacheRef.current.get(cacheKey);
+    if (cached) {
+      setPreviewHtml(cached);
+      isInitialPreviewRef.current = false;
+      return;
+    }
     setPreviewLoading(true);
+    const prevScrollTop = previewPaneRef.current?.scrollTop ?? 0;
     try {
       const res = await fetch("/api/preview", {
         method: "POST",
@@ -368,12 +490,13 @@ Section ids: ${config.sections.map((s) => `${s.id}(${s.type}${s.props.query ? `:
       });
       const data = await res.json();
       if (data.html) {
+        previewCacheRef.current.set(cacheKey, data.html);
         setPreviewHtml(data.html);
-        if (!isInitialPreviewRef.current) {
-          requestAnimationFrame(() => {
-            if (previewPaneRef.current) previewPaneRef.current.scrollTop = previewPaneRef.current.scrollHeight;
-          });
-        }
+        requestAnimationFrame(() => {
+          if (previewPaneRef.current) {
+            previewPaneRef.current.scrollTop = isInitialPreviewRef.current ? 0 : prevScrollTop;
+          }
+        });
         isInitialPreviewRef.current = false;
       }
     } catch {
@@ -383,10 +506,11 @@ Section ids: ${config.sections.map((s) => `${s.id}(${s.type}${s.props.query ? `:
   }, [config]);
 
   useEffect(() => {
+    if (configLoading) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(refreshPreview, 500);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [config, refreshPreview]);
+  }, [config, refreshPreview, configLoading]);
 
 
   return (
@@ -408,7 +532,68 @@ Section ids: ${config.sections.map((s) => `${s.id}(${s.type}${s.props.query ? `:
 
           {mounted && <div className="relative">
             <button
-              onClick={() => setPaletteOpen((v) => !v)}
+              onClick={() => { setSectionsOpen((v) => !v); setPaletteOpen(false); }}
+              title="Manage sections"
+              className={`flex items-center justify-center w-8 h-8 rounded-lg border transition-all ${
+                sectionsOpen
+                  ? "border-foreground bg-foreground text-white"
+                  : "border-border text-subtle hover:border-[#ccc]"
+              }`}
+            >
+              <Icons.trash />
+            </button>
+            {sectionsOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setSectionsOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 w-68 bg-white border border-border rounded-xl shadow-lg z-50 p-3" style={{ width: "272px" }}>
+                  <p className="text-xs text-subtle uppercase tracking-wider mb-2">Remove section</p>
+                  {(() => {
+                    // Only show content sections — dividers are auto-managed
+                    const removable = config.sections.filter(s => !["intro", "footer", "divider"].includes(s.type));
+                    if (removable.length === 0) return (
+                      <p className="text-xs text-placeholder px-2 py-1.5">No sections to remove</p>
+                    );
+                    return (
+                      <div className="space-y-0.5">
+                        {removable.map((s) => {
+                          const meta = SECTION_PALETTE.find(p => p.type === s.type);
+                          const label = meta?.label ?? s.type;
+                          const icon = meta?.icon ?? "·";
+                          const details = [
+                            s.props.query && `"${s.props.query}"`,
+                            s.props.hours && `${s.props.hours}h`,
+                            s.props.minPoints && `${s.props.minPoints}+ pts`,
+                            s.props.count && `×${s.props.count}`,
+                          ].filter(Boolean).join(" · ");
+                          return (
+                            <div key={s.id} className="flex items-center justify-between px-2 py-2 rounded-lg hover:bg-surface group cursor-default">
+                              <span className="flex items-center gap-2 min-w-0">
+                                <span className="text-sm flex-shrink-0">{icon}</span>
+                                <span className="flex flex-col min-w-0">
+                                  <span className="text-xs font-medium text-label leading-tight">{label}</span>
+                                  {details && <span className="text-[10px] text-placeholder leading-tight truncate">{details}</span>}
+                                </span>
+                              </span>
+                              <button
+                                onClick={() => { deleteSection(s.id); setSectionsOpen(false); }}
+                                className="cursor-pointer flex-shrink-0 ml-2 text-placeholder hover:text-red-500 transition-colors p-1 rounded opacity-0 group-hover:opacity-100"
+                                aria-label={`Remove ${label}`}
+                              >
+                                <Icons.trash className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </>
+            )}
+          </div>}
+          {mounted && <div className="relative">
+            <button
+              onClick={() => { setPaletteOpen((v) => !v); setSectionsOpen(false); }}
               title="Add sections / prompts"
               className={`flex items-center justify-center w-8 h-8 rounded-lg border transition-all ${
                 paletteOpen
@@ -527,20 +712,62 @@ Section ids: ${config.sections.map((s) => `${s.id}(${s.type}${s.props.query ? `:
             </button>
           </div>
 
-          <div ref={previewPaneRef} className="flex-1 overflow-y-auto py-6 px-4">
-            {previewHtml ? (
-              <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
-                <iframe
-                  srcDoc={previewHtml}
-                  className="w-full"
-                  style={{ height: "900px", border: "none", display: "block" }}
-                  title="Newsletter Preview"
-                />
+          <div ref={previewPaneRef} className="flex-1 overflow-y-auto pt-4">
+            {configLoading || !previewHtml ? (
+              <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden animate-pulse">
+                {/* Header block */}
+                <div className="bg-gray-800 px-8 py-8 space-y-3">
+                  <div className="h-2.5 bg-gray-600 rounded w-32" />
+                  <div className="h-7 bg-gray-500 rounded w-48 mt-2" />
+                  <div className="h-3 bg-gray-600 rounded w-72" />
+                </div>
+                {/* Section label */}
+                <div className="px-6 pt-6 pb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1 h-4 bg-gray-300 rounded-full" />
+                    <div className="h-3 bg-gray-300 rounded w-24" />
+                  </div>
+                </div>
+                {/* Story rows */}
+                <div className="px-6 pb-4 space-y-5">
+                  {[...Array(12)].map((_, i) => (
+                    <div key={i} className="flex gap-4 pt-3 border-t border-gray-100">
+                      <div className="h-5 w-4 bg-gray-300 rounded flex-shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 bg-gray-300 rounded w-full" />
+                        <div className="h-3 bg-gray-200 rounded w-2/5" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="px-6 pb-6">
+                  <div className="h-3 bg-gray-200 rounded w-36" />
+                </div>
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center">
-                <p className="text-sm text-placeholder">Loading preview…</p>
-              </div>
+              <iframe
+                srcDoc={previewHtml}
+                className="w-full"
+                scrolling="no"
+                style={{ height: "600px", border: "none", display: "block", overflow: "hidden" }}
+                onLoad={(e) => {
+                  const iframe = e.currentTarget;
+                  iframe.style.height = "0px";
+                  requestAnimationFrame(() => requestAnimationFrame(() => {
+                    try {
+                      const doc = iframe.contentDocument;
+                      const h = Math.max(
+                        doc?.documentElement?.scrollHeight ?? 0,
+                        doc?.body?.scrollHeight ?? 0,
+                      ) + 40; // buffer for bottom padding
+                      iframe.style.height = `${Math.max(h, 200)}px`;
+                    } catch {
+                      iframe.style.height = "600px";
+                    }
+                  }));
+                }}
+                title="Newsletter Preview"
+              />
             )}
           </div>
         </div>

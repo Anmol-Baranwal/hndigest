@@ -68,27 +68,27 @@ export default function LandingPage() {
             what you want.
           </h2>
           <p className="text-muted text-base leading-relaxed mb-8">
-            Type &ldquo;show the top 7 stories with a dark header and serif
-            font&rdquo;. The AI updates your newsletter live. No menus, no
-            config panels.
+            Type &ldquo;add top HN stories and 10 LLM news from the last 48
+            hours, dark header&rdquo;. The AI updates your newsletter live. No
+            menus, no config panels.
           </p>
         </div>
         <div className="bg-card rounded-2xl p-6 flex flex-col gap-3">
           <ChatBubble
             role="user"
-            text="Add AI news from the last 48 hours and recent gems with 100+ points"
+            text="Add top HN stories and 10 LLM news from the last 48 hours, dark header"
           />
           <ChatBubble
             role="ai"
-            text="Done! Added an AI topic section for the past 48 hours and a Recent Gems section with a 100-point threshold."
+            text="Done! Added top stories, an LLM news section capped at 10 from the last 48 hours, and applied a dark header."
           />
           <ChatBubble
             role="user"
-            text="Make it weekly on Fridays, dark header"
+            text="Send it every Friday morning"
           />
           <ChatBubble
             role="ai"
-            text="Updated to weekly on Fridays and applied a dark header."
+            text="Set to weekly on Fridays. You can pick the exact time and timezone when you activate."
           />
         </div>
       </section>
@@ -109,7 +109,7 @@ export default function LandingPage() {
                 <p className="text-white text-sm font-medium leading-snug">
                   {s.title}
                 </p>
-                <p className="text-body text-xs mt-1">{s.points} points</p>
+                <p className="text-body text-xs mt-1">{s.upvotes} upvotes</p>
               </div>
             </div>
           ))}
@@ -137,8 +137,8 @@ export default function LandingPage() {
             <div className="inline-block text-xs text-muted bg-card border border-border rounded-full px-3 py-1 mb-4">
               Sections
             </div>
-            <h2 className="font-serif text-5xl text-foreground mb-3">10+ section types.</h2>
-            <p className="text-muted text-base max-w-xl">Mix and match. Each section pulls live data from HN at send time.</p>
+            <h2 className="font-serif text-5xl text-foreground mb-3">10 section types.</h2>
+            <p className="text-muted text-base max-w-3xl">Mix and match. Each section pulls live data from HN at send time. You can filter some sections by story count, how recent (last 24h up to 30 days), or minimum upvotes. Just ask in chat.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-border rounded-2xl overflow-hidden border border-border">
             {SECTION_CARDS.map((s) => (
@@ -165,13 +165,12 @@ export default function LandingPage() {
             It just sends.
           </h2>
           <p className="text-muted text-base leading-relaxed mb-8">
-            Activate your schedule with a magic link. Fresh HN stories are
-            fetched at send time. No stale data, ever. Pause or update anytime
-            from your dashboard.
+            Activate with a magic link. Change your schedule, time, or timezone anytime from your dashboard. Stories are always fetched fresh at send time.
           </p>
+          <p className="text-sm text-muted mb-6">Supports 70+ timezones.</p>
           <div className="grid grid-cols-3 gap-4">
             {SCHEDULE_OPTIONS.map((item) => (
-              <div key={item.label} className="bg-card rounded-xl p-4">
+              <div key={item.label} className="bg-card rounded-xl p-4 border border-border">
                 <div className="text-sm font-semibold text-foreground mb-1">
                   {item.label}
                 </div>
@@ -180,12 +179,12 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-        <div className="bg-card rounded-2xl p-6">
+        <div className="bg-foreground rounded-2xl p-6">
           <div className="flex items-center justify-between mb-5">
-            <span className="text-sm font-medium text-foreground">
+            <span className="text-sm font-medium text-white">
               My Weekly HN Digest
             </span>
-            <span className="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-medium">
+            <span className="text-xs bg-accent text-white px-2.5 py-1 rounded-full font-medium">
               Active
             </span>
           </div>
@@ -193,15 +192,15 @@ export default function LandingPage() {
             {DASHBOARD_ROWS.map((row) => (
               <div key={row.label} className="flex justify-between text-sm">
                 <span className="text-subtle">{row.label}</span>
-                <span className="text-foreground font-medium">{row.value}</span>
+                <span className="text-white font-medium">{row.value}</span>
               </div>
             ))}
           </div>
           <div className="flex gap-2 mt-6">
-            <button className="flex-1 text-xs border border-border bg-white rounded-lg py-2 text-body hover:bg-background transition-colors">
+            <button className="flex-1 text-xs border border-foreground-dark bg-[#2a2a2a] rounded-lg py-2 text-subtle hover:bg-[#333] transition-colors">
               Pause
             </button>
-            <button className="flex-1 text-xs border border-border bg-white rounded-lg py-2 text-body hover:bg-background transition-colors">
+            <button className="flex-1 text-xs border border-foreground-dark bg-[#2a2a2a] rounded-lg py-2 text-subtle hover:bg-[#333] transition-colors">
               Edit
             </button>
           </div>
@@ -219,9 +218,10 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {SECURITY_FEATURES.map((item, i) => {
               const Icon = [Icons.lock, Icons.eyeOff, Icons.trash][i];
+              const iconColors = ["text-orange-500 bg-orange-50", "text-blue-500 bg-blue-50", "text-red-500 bg-red-50"];
               return (
-              <div key={item.title} className="bg-white border border-border rounded-2xl p-6">
-                <div className="w-10 h-10 rounded-xl bg-card flex items-center justify-center text-foreground mb-4">
+              <div key={item.title} className="bg-card border border-border rounded-2xl p-6">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${iconColors[i]}`}>
                   <Icon />
                 </div>
                 <h3 className="text-sm font-semibold text-foreground mb-2">{item.title}</h3>
@@ -239,14 +239,14 @@ export default function LandingPage() {
             Ready to build yours?
           </h2>
           <p className="text-muted mb-8 max-w-md mx-auto">
-            Takes under two minutes. No signup, just a magic link when you&apos;re
-            ready to activate.
+            Takes under two minutes. Just a magic link when you&apos;re ready
+            to activate.
           </p>
           <Link
             href="/editor"
             className="inline-block bg-accent text-white px-8 py-4 rounded-full text-sm font-medium hover:bg-accent-hover transition-colors"
           >
-            Start building for free →
+            Start building for free
           </Link>
         </div>
       </section>
@@ -259,7 +259,7 @@ export default function LandingPage() {
               100% Open Source
             </div>
             <h2 className="font-serif text-3xl text-white mb-3">
-              Read the code. Fork it. Own it.
+              Fully open source.
             </h2>
 
             <p className="text-subtle text-sm leading-relaxed max-w-md">
@@ -285,7 +285,7 @@ export default function LandingPage() {
           <span className="text-sm text-body">HN Digest</span>
           <span className="text-sm text-body">
             Built by{" "}
-            <a href="https://github.com/Anmol-Baranwal" target="_blank" rel="noopener noreferrer" className="text-subtle hover:text-placeholder transition-colors">Anmol-Baranwal</a>
+            <a href="https://github.com/Anmol-Baranwal" target="_blank" rel="noopener noreferrer" className="text-subtle hover:text-placeholder transition-colors">Anmol</a>
           </span>
         </div>
       </footer>

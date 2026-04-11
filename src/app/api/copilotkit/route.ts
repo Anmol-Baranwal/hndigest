@@ -6,7 +6,7 @@ import { BuiltInAgent } from "@copilotkit/runtime/v2";
 import { NextRequest } from "next/server";
 
 const builtInAgent = new BuiltInAgent({
-  model: "openai:gpt-4o",
+  model: "openai:gpt-5.4",
 });
 
 const runtime = new CopilotRuntime({

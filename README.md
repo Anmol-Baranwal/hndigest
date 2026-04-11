@@ -8,24 +8,20 @@ No signup required. Build and preview for free. You only need a [Resend](https:/
 
 ## Sections
 
-Every section supports a `count` parameter (default 5, max 20).
+All content sections support a `count` parameter (default 5, max 30) to control how many stories show up. Some sections have additional filters.
 
-| Section | What it shows | Extra options |
+| Section | What it shows | Options |
 |---|---|---|
-| `hn-stories` | Top HN stories | — |
-| `show-hn` | Show HN projects | — |
-| `ask-hn` | Top Ask HN questions | — |
-| `hiring` | Who's Hiring thread entries | — |
-| `open-source` | GitHub projects from Show HN | — |
-| `most-commented` | Stories with most comments | — |
-| `trending` | Stories ranked by upvotes + comments | — |
-| `topic` | Algolia keyword search | `query`, `hours` (24/48/168) |
-| `recent-gems` | Recent stories above a points threshold | `hours` (24/48/168), `minPoints` (default 50) |
-| `high-signal` | High-upvote stories, sorted by score | `minPoints` (default 200) |
-| `custom-text` | Any text block | — |
-| `intro` | Intro paragraph at the top | — |
-| `footer` | Footer at the bottom | — |
-| `divider` | Horizontal separator | — |
+| `hn-stories` | Top HN stories | `count` |
+| `show-hn` | Show HN projects | `count` |
+| `ask-hn` | Top Ask HN questions | `count` |
+| `hiring` | Who's Hiring thread entries | `count` |
+| `open-source` | GitHub projects from Show HN | `count` |
+| `most-commented` | Stories with most comments | `count` |
+| `trending` | Stories ranked by upvotes + comments | `count` |
+| `topic` | Algolia keyword search | `count`, `query`, `hours` (24 hrs to 30 days) |
+| `recent-gems` | Recent stories above a min upvote threshold | `count`, `hours` (24 hrs to 30 days), `min upvotes` (default 50) |
+| `high-signal` | High-upvote stories sorted by score | `count`, `min upvotes` (default 200), `hours` (default 30 days) |
 
 ## Example prompts
 
@@ -34,7 +30,7 @@ Every section supports a `count` parameter (default 5, max 20).
 | "Add AI news from the last 48 hours" | Topic section, query="AI", hours=48 |
 | "Show HN with 7 stories" | Show HN section, count=7 |
 | "Add a hiring section" | Pulls latest Who's Hiring thread |
-| "Add recent gems with 150+ points from this week" | recent-gems, minPoints=150, hours=168 |
+| "Add recent gems with 150+ upvotes from this week" | recent-gems, minPoints=150, hours=168 |
 | "Make it weekly on Mondays at 9am EST" | Sets schedule with timezone |
 | "Dark header, serif font" | Updates colors and typography |
 | "Add Ask HN and remove the divider" | Adds one section, removes another |
