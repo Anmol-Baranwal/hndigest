@@ -10,7 +10,6 @@ export type SectionType =
   | "recent-gems"     // Algolia: recent stories with min points (dynamic)
   | "high-signal"     // Algolia: high points, low comments (dynamic)
   | "divider"
-  | "custom-text"
   | "intro"
   | "footer";
 

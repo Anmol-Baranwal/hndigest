@@ -4,17 +4,17 @@ export const SECTION_CARDS = [
   { label: "Ask HN", desc: "Top questions", color: "#6366F1" },
   { label: "Who's Hiring", desc: "Monthly hiring thread", color: "#0284C7" },
   { label: "Open Source", desc: "GitHub projects", color: "#16A34A" },
-  { label: "Topic Search", desc: "Any keyword, any window", color: "#0891B2" },
+  { label: "Topic Search", desc: "Any keyword, filter by timeframe", color: "#0891B2" },
   { label: "Trending", desc: "Upvotes + comments score", color: "#D97706" },
   { label: "Most Discussed", desc: "Highest comment count", color: "#DC2626" },
-  { label: "Recent Gems", desc: "High-quality recent posts", color: "#059669" },
-  { label: "High Signal", desc: "200+ upvotes, sorted", color: "#7C3AED" },
+  { label: "Recent Gems", desc: "Recent posts, filter by upvotes and timeframe (24h to 30 days)", color: "#059669" },
+  { label: "High Signal", desc: "Sorted by score, filter by upvote count and timeframe", color: "#7C3AED" },
 ];
 
 export const PREVIEW_STORIES = [
-  { n: 1, title: "Show HN: I built a tool that writes emails for me", points: 847 },
-  { n: 2, title: "The unreasonable effectiveness of simple ideas", points: 621 },
-  { n: 3, title: "Ask HN: What are you working on this month?", points: 512 },
+  { n: 1, title: "Show HN: I built a tool that writes emails for me", upvotes: 847 },
+  { n: 2, title: "The unreasonable effectiveness of simple ideas", upvotes: 621 },
+  { n: 3, title: "Ask HN: What are you working on this month?", upvotes: 512 },
 ];
 
 export const SCHEDULE_OPTIONS = [
