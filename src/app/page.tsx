@@ -11,10 +11,14 @@ import {
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
-      <nav className="flex items-center justify-between px-8 py-5 max-w-6xl mx-auto">
-        <span className="text-sm font-medium tracking-tight text-foreground">
-          HN Digest
-        </span>
+      <nav className="flex items-center justify-between px-8 py-6 max-w-6xl mx-auto">
+        <Link href="/" className="flex items-center gap-3">
+          <svg width="28" height="33" viewBox="0 0 22 26" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11 0C11 0 18 6 18 13C18 17.4 15.2 20.5 13 22C13.5 20 13 18 11.5 16.5C11 19 9 21 7 22.5C5 21 4 18.5 4 16C4 13.5 5.5 11.5 7 10C7 12 7.5 13.5 8.5 14.5C8.5 10 11 0 11 0Z" fill="#FF6600"/>
+            <ellipse cx="11" cy="23" rx="4" ry="2.5" fill="#FF6600" opacity="0.3"/>
+          </svg>
+          <span className="text-base font-medium tracking-tight text-foreground">HN Digest</span>
+        </Link>
         <div className="flex items-center gap-6">
           <Link
             href="/dashboard"
@@ -39,9 +43,7 @@ export default function LandingPage() {
             <em>designed by you.</em>
           </h1>
           <p className="text-lg text-muted leading-relaxed max-w-xl mb-10">
-            Tell the AI which sections you want: top stories, hiring, AI news,
-            Show HN, and more. See your digest update live with real HN data.
-            Activate with a magic link, get it in your inbox on your schedule.
+            Describe what you want. See your newsletter update live with real HN data. Activate with a magic link, get it in your inbox on your schedule.
           </p>
           <div className="flex items-center gap-4 flex-wrap">
             <Link
@@ -237,7 +239,7 @@ export default function LandingPage() {
             Ready to build yours?
           </h2>
           <p className="text-muted mb-8 max-w-md mx-auto">
-            Takes under two minutes. No signup, just a magic link when you're
+            Takes under two minutes. No signup, just a magic link when you&apos;re
             ready to activate.
           </p>
           <Link
