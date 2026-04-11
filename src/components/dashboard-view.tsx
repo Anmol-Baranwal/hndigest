@@ -375,9 +375,10 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
               <div className="space-y-1">
                 {sections.filter((s) => !SECTION_META[s.type]?.structural).map((section, i) => {
                   const meta = SECTION_META[section.type];
-                  const count = section.props.count;
+                  const effectiveCount = section.props.count
+                    ?? (section.type === "hn-stories" ? hnConfig.count : section.type === "hiring" ? 4 : 5);
                   return (
-                    <div key={section.id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-background">
+                    <div key={section.id} className="group flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-background">
                       <span className="text-xs text-placeholder w-4 text-right">{i + 1}</span>
                       <span
                         className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0"
@@ -387,8 +388,19 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
                       </span>
                       <div className="flex-1 min-w-0">
                         <span className="text-sm font-medium text-foreground">{meta.label}</span>
-                        {count && <span className="text-xs text-placeholder ml-1.5">{count} items</span>}
+                        <span className="text-xs text-placeholder ml-1.5">{effectiveCount} items</span>
                       </div>
+                      <button
+                        onClick={async () => {
+                          const newSections = schedule!.sections.filter((s) => s.id !== section.id);
+                          setSchedule((prev) => prev ? { ...prev, sections: newSections } : prev);
+                          await patch({ sections: newSections });
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-placeholder hover:text-red-500 cursor-pointer"
+                        title="Remove section"
+                      >
+                        <Icons.trash width={14} height={14} />
+                      </button>
                     </div>
                   );
                 })}
