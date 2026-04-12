@@ -84,6 +84,8 @@ export function NewsletterEditor() {
   const previewPaneRef = useRef<HTMLDivElement>(null);
   const isInitialPreviewRef = useRef(true);
   const previewCacheRef = useRef<Map<string, string>>(new Map());
+  const prevSectionCountRef = useRef(0);
+  const scrollToBottomRef = useRef(false);
   const [configLoading, setConfigLoading] = useState(true);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
@@ -562,6 +564,11 @@ User: "add Most Discussed + Ask HN + Open Source" (none exist)
 
   const refreshPreview = useCallback(async () => {
     const cacheKey = `${PREVIEW_CACHE_VERSION}:${JSON.stringify(config)}`;
+    const contentCount = config.sections.filter(s => !["intro","footer","divider"].includes(s.type)).length;
+    if (!isInitialPreviewRef.current && contentCount > prevSectionCountRef.current) {
+      scrollToBottomRef.current = true;
+    }
+    prevSectionCountRef.current = contentCount;
     const cached = previewCacheRef.current.get(cacheKey);
     if (cached) {
       setPreviewHtml(cached);
@@ -861,6 +868,10 @@ User: "add Most Discussed + Ask HN + Open Source" (none exist)
                       iframe.style.height = `${Math.max(h, 200)}px`;
                     } catch {
                       iframe.style.height = "600px";
+                    }
+                    if (scrollToBottomRef.current && previewPaneRef.current) {
+                      scrollToBottomRef.current = false;
+                      previewPaneRef.current.scrollTop = previewPaneRef.current.scrollHeight;
                     }
                   }));
                 }}
