@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { Icons } from "@/components/icons";
+import { getSessionFromCookies } from "@/lib/auth";
 import {
   SECTION_CARDS,
   PREVIEW_STORIES,
   SCHEDULE_OPTIONS,
   DASHBOARD_ROWS,
   SECURITY_FEATURES,
+  HOW_IT_WORKS,
 } from "@/lib/data";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await getSessionFromCookies();
   return (
     <div className="min-h-screen bg-background">
       <nav className="flex items-center justify-between px-8 py-6 max-w-6xl mx-auto">
@@ -20,12 +23,14 @@ export default function LandingPage() {
           <span className="text-base font-medium tracking-tight text-foreground">HN Digest</span>
         </Link>
         <div className="flex items-center gap-6">
-          <Link
-            href="/dashboard"
-            className="text-sm text-muted hover:text-foreground transition-colors"
-          >
-            Dashboard
-          </Link>
+          {session && (
+            <Link
+              href="/dashboard"
+              className="text-sm text-muted hover:text-foreground transition-colors"
+            >
+              Dashboard
+            </Link>
+          )}
           <Link
             href="/editor"
             className="text-sm bg-foreground text-white px-4 py-2 rounded-full hover:bg-foreground-dark transition-colors"
@@ -233,15 +238,29 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="border-t border-border">
-        <div className="max-w-6xl mx-auto px-8 py-24 text-center">
-          <h2 className="font-serif text-5xl text-foreground mb-5">
-            Ready to build yours?
-          </h2>
-          <p className="text-muted mb-8 max-w-md mx-auto">
-            Takes under two minutes. Just a magic link when you&apos;re ready
-            to activate.
-          </p>
+      <section className="border-t border-foreground bg-foreground">
+        <div className="max-w-6xl mx-auto px-8 pt-24 pb-16">
+          <div className="text-center mb-16">
+            <h2 className="font-serif text-5xl text-white mb-4">From idea to inbox.</h2>
+            <p className="text-subtle text-base max-w-md mx-auto">Four steps. Takes under two minutes.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-0 relative">
+            {HOW_IT_WORKS.map((item, i) => (
+              <div key={item.step} className="relative flex flex-col items-start px-6 py-2">
+                {i < HOW_IT_WORKS.length - 1 && (
+                  <div className="hidden md:block absolute top-[18px] left-[calc(50%+20px)] right-0 h-px bg-foreground-dark" />
+                )}
+                <div className="w-9 h-9 rounded-full border border-foreground-dark flex items-center justify-center mb-5 relative z-10 bg-foreground">
+                  <span className="text-accent font-mono text-xs font-semibold">{item.step}</span>
+                </div>
+                <h3 className="text-white font-semibold text-base mb-2">{item.title}</h3>
+                <p className="text-subtle text-sm leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="text-center pb-16">
+          <h2 className="font-serif text-5xl text-white mb-8">Ready to build yours?</h2>
           <Link
             href="/editor"
             className="inline-block bg-accent text-white px-8 py-4 rounded-full text-sm font-medium hover:bg-accent-hover transition-colors"
@@ -249,9 +268,12 @@ export default function LandingPage() {
             Start building for free
           </Link>
         </div>
+        <div className="flex justify-center pb-0">
+          <div className="w-48 h-px bg-foreground-dark opacity-50" />
+        </div>
       </section>
 
-      <section className="border-t border-border bg-foreground">
+      <section className="bg-foreground">
         <div className="max-w-6xl mx-auto px-8 py-14 flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
             <div className="inline-flex items-center gap-2 text-xs text-subtle bg-[#2a2a2a] border border-foreground-dark rounded-full px-3 py-1.5 mb-4">

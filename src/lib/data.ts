@@ -30,6 +30,29 @@ export const DASHBOARD_ROWS = [
   { label: "Last sent", value: "Mon, Mar 28 · 8:01 AM" },
 ];
 
+export const HOW_IT_WORKS = [
+  {
+    step: "01",
+    title: "Describe it",
+    desc: "Chat with the AI. Add sections, set filters, pick a schedule and style.",
+  },
+  {
+    step: "02",
+    title: "Preview live",
+    desc: "See your newsletter update in real time with actual HN data as you build.",
+  },
+  {
+    step: "03",
+    title: "Activate",
+    desc: "Enter your Resend key, verify your email. One magic link, no password.",
+  },
+  {
+    step: "04",
+    title: "It just sends",
+    desc: "Fresh stories fetched at send time. Change your schedule anytime from the dashboard.",
+  },
+];
+
 export const SECURITY_FEATURES = [
   {
     title: "Encrypted at rest",

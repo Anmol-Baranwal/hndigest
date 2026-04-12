@@ -63,11 +63,11 @@ Get the `scheduleId` from the `newsletters` table after activating a digest.
 
 Fork the repo on GitHub, then go to [vercel.com/new](https://vercel.com/new) and import your fork.
 
-### 3. Add Neon integration
+### 2. Add Neon integration
 
 In your Vercel project → **Storage** → **Add** → **Neon**. This auto-creates a Postgres database and injects `POSTGRES_URL` into your environment.
 
-### 4. Set environment variables
+### 3. Set environment variables
 
 In Vercel dashboard → **Settings** → **Environment Variables**:
 
@@ -81,13 +81,13 @@ In Vercel dashboard → **Settings** → **Environment Variables**:
 | `NEXT_PUBLIC_BASE_URL` | Your deployed URL e.g. `https://hndigest.vercel.app` |
 | `RESEND_API_KEY` | [resend.com/api-keys](https://resend.com/api-keys) — optional fallback |
 
-### 5. Configure QStash
+### 4. Configure QStash
 
 In [console.upstash.com](https://console.upstash.com) → QStash:
 - The app automatically creates per-user schedules pointing to `https://your-app.vercel.app/api/send?id=<scheduleId>`
 - Make sure `CRON_SECRET` in Vercel matches what the app sends as `x-cron-secret`
 
-### 6. Deploy
+### 5. Deploy
 
 Vercel auto-deploys on push to `main`. First deploy will run DB migrations automatically (tables are created on first request).
 

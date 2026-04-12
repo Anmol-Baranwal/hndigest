@@ -107,6 +107,6 @@ QStash calls `POST /api/send?id=<scheduleId>` at the user's configured time (con
 
 QStash converts the user's chosen time + timezone to a UTC cron expression. Format: `MM HH * * D` (weekly) or `MM HH * * *` (daily).
 
-Time conversion: `lib/timezones.ts` → `localTimeToUtc()` uses `Date.toLocaleString("en-CA", { timeZoneName: "shortOffset" })` for DST-safe IANA timezone offset calculation.
+Time conversion: `src/lib/timezones.ts` → `localTimeToUtc()` uses `Date.toLocaleString("en-CA", { timeZoneName: "shortOffset" })` for DST-safe IANA timezone offset calculation.
 
 QStash has no update API — schedule changes cancel the old schedule and create a new one.

@@ -4,7 +4,11 @@ Chat with an AI to build your own Hacker News newsletter. Tell it which sections
 
 https://github.com/user-attachments/assets/07a37eb3-b0b6-4e3e-b347-4d6e017865a9
 
-No signup required. Build and preview for free. You only need a [Resend](https://resend.com) API key when you're ready to activate — they give 3,000 free emails per month.
+Build and preview for free. You only need a [Resend](https://resend.com) API key when you're ready to activate (only send access is needed). Emails go out through your key so you can also monitor delivery directly from your Resend dashboard. They give 3,000 free emails per month.
+
+## Activation flow
+
+<!-- activation GIF here -->
 
 ## Sections
 
@@ -39,7 +43,12 @@ All content sections support a `count` parameter (default 5, max 30) to control 
 
 ## Stack
 
-[Next.js](https://nextjs.org) as the framework, [CopilotKit](https://github.com/CopilotKit/CopilotKit) for the AI chat editor, [Resend](https://resend.com) + [React Email](https://react.email) for email delivery, [Neon](https://neon.tech) for the database, [Upstash QStash](https://upstash.com/docs/qstash/overall/getstarted) for per-user scheduling, and [Firebase HN API](https://github.com/HackerNews/API) + [Algolia](https://hn.algolia.com/api) for live HN data.
+- [Next.js](https://nextjs.org) as the framework
+- [CopilotKit](https://github.com/CopilotKit/CopilotKit) for the agent chat editor
+- [Resend](https://resend.com) + [React Email](https://react.email) for email delivery
+- [Neon](https://neon.tech) for the database
+- [Upstash QStash](https://upstash.com/docs/qstash/overall/getstarted) for per-user scheduling
+- [Firebase HN API](https://github.com/HackerNews/API) + [Algolia](https://hn.algolia.com/api) for live HN data
 
 ## Docs
 
