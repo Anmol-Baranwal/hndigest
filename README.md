@@ -31,15 +31,19 @@ All content sections support a `count` parameter (default 5, max 30) to control 
 
 | Prompt | What happens |
 |---|---|
-| "Add AI news from the last 48 hours" | Topic section, query="AI", hours=48 |
-| "Show HN with 7 stories" | Show HN section, count=7 |
-| "Add a hiring section" | Pulls latest Who's Hiring thread |
+| "Add top HN stories and 10 LLM news from the last 48 hours" | hn-stories + topic section, query="LLM", count=10, hours=48 |
+| "Add AI news from the last week" | topic section, query="AI", hours=168 |
 | "Add recent gems with 150+ upvotes from this week" | recent-gems, minPoints=150, hours=168 |
-| "Make it weekly on Mondays at 9am EST" | Sets schedule with timezone |
-| "Dark header, serif font" | Updates colors and typography |
-| "Add Ask HN and remove the divider" | Adds one section, removes another |
+| "Add high signal posts with 300+ upvotes" | high-signal section, minPoints=300 |
+| "Show HN with 7 stories" | show-hn section, count=7 |
+| "Add a hiring section" | Pulls latest Who's Hiring thread |
+| "Update AI news and include stories from last 7 days" | Updates hours on the existing topic section |
 | "Move top stories to the top" | Reorders sections |
-| "What sections can I add?" | AI lists all available section types |
+| "Remove the hiring section" | Deletes the section |
+| "Dark mode" | Dark background, white text, dark header |
+| "Dark header" | Dark header only, body stays light |
+| "Make it weekly on Mondays at 9am EST" | Weekly schedule, Monday, converted to UTC |
+| "What sections can I add?" | Shows a visual card grid of all 10 section types |
 
 ## Stack
 

@@ -19,7 +19,7 @@ const SECTION_PALETTE = [
   { type: "ask-hn",        icon: "❓", label: "Ask HN",            desc: "Top community questions" },
   { type: "topic",         icon: "🔍", label: "Topic",             desc: "Stories by keyword (AI, Rust, etc.)" },
   { type: "recent-gems",   icon: "💎", label: "Recent Gems",       desc: "New stories with high upvotes" },
-  { type: "high-signal",   icon: "📡", label: "High Signal",       desc: "High upvotes, low comments" },
+  { type: "high-signal",   icon: "📡", label: "High Signal",       desc: "Top stories by score, filterable by min upvotes and timeframe" },
 ] as const;
 
 function normalizeDividers(sections: import("../lib/types").NewsletterSection[]): import("../lib/types").NewsletterSection[] {
@@ -524,41 +524,35 @@ User: "add Most Discussed + Ask HN + Open Source" (none exist)
       name: "show_available_sections",
       description: "Show a visual overview of all available section types. Call this when the user asks what sections are available, what they can add, or wants to browse section options.",
       parameters: z.object({}),
+      followUp: false,
       handler: async () => "Showing available sections.",
       render: ({ status }) => {
         if (status === ToolCallStatus.Executing) {
           return (
-            <div className="mt-2 grid grid-cols-2 gap-1.5 animate-pulse">
+            <div className="mt-3 grid grid-cols-2 gap-2 animate-pulse">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-14 bg-gray-100 rounded-xl" />
+                <div key={i} className="h-16 bg-gray-100 rounded-xl" />
               ))}
             </div>
           );
         }
-        const FILTERABLE = new Set(["topic", "recent-gems", "high-signal"]);
         return (
-          <div className="mt-2 space-y-2">
-            <p className="text-[11px] text-gray-400 uppercase tracking-wider font-medium">10 section types</p>
-            <div className="grid grid-cols-2 gap-1.5">
+          <div className="mt-3 space-y-3">
+            <p className="text-[11px] text-gray-400 uppercase tracking-wider font-semibold">10 section types</p>
+            <div className="grid grid-cols-2 gap-2">
               {SECTION_PALETTE.map(({ type, icon, label, desc }) => (
                 <div
                   key={type}
-                  className="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100 hover:border-gray-200 transition-colors"
+                  className="flex flex-col gap-1 px-3.5 py-3 rounded-xl bg-white border border-gray-200 shadow-sm hover:border-gray-300 hover:shadow transition-all"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <span className="text-sm">{icon}</span>
-                      <span className="text-[12px] font-semibold text-gray-800">{label}</span>
-                    </span>
-                    {FILTERABLE.has(type) && (
-                      <span className="text-[9px] font-medium text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-full border border-orange-100">filter</span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-gray-400 leading-snug">{desc}</p>
+                  <span className="flex items-center gap-2">
+                    <span className="text-base">{icon}</span>
+                    <span className="text-[13px] font-semibold text-gray-900">{label}</span>
+                  </span>
+                  <p className="text-[11.5px] text-gray-500 leading-snug">{desc}</p>
                 </div>
               ))}
             </div>
-            <p className="text-[11px] text-gray-400">Just tell me what to add — I&apos;ll handle the rest.</p>
           </div>
         );
       },
