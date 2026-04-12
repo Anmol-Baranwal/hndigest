@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ScheduleRecord } from "../lib/types";
 import { SECTION_META } from "../lib/section-meta";
 import { TIMEZONES, localTimeToUtc, utcTimeToLocal, getTzAbbr } from "../lib/timezones";
+import { Icons } from "./icons";
 
 interface Props {
   email: string;
@@ -21,11 +22,7 @@ function normalizeTime(input: string): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-const chevron = (
-  <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-placeholder pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-  </svg>
-);
+const chevron = <Icons.chevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-placeholder pointer-events-none" />;
 
 const selectCls = "appearance-none border border-border rounded-lg pl-3 pr-8 py-2 text-sm focus:outline-none focus:border-accent text-foreground bg-white";
 
@@ -378,9 +375,10 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
               <div className="space-y-1">
                 {sections.filter((s) => !SECTION_META[s.type]?.structural).map((section, i) => {
                   const meta = SECTION_META[section.type];
-                  const count = section.props.count;
+                  const effectiveCount = section.props.count
+                    ?? (section.type === "hn-stories" ? hnConfig.count : section.type === "hiring" ? 4 : 5);
                   return (
-                    <div key={section.id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-background">
+                    <div key={section.id} className="flex items-center gap-3 py-2 px-3 rounded-lg">
                       <span className="text-xs text-placeholder w-4 text-right">{i + 1}</span>
                       <span
                         className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0"
@@ -390,7 +388,7 @@ export function DashboardView({ email, schedule: initialSchedule }: Props) {
                       </span>
                       <div className="flex-1 min-w-0">
                         <span className="text-sm font-medium text-foreground">{meta.label}</span>
-                        {count && <span className="text-xs text-placeholder ml-1.5">{count} items</span>}
+                        <span className="text-xs text-placeholder ml-1.5">{effectiveCount} items</span>
                       </div>
                     </div>
                   );

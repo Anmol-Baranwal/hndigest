@@ -59,9 +59,10 @@ export async function fetchRecentGems(
 
 export async function fetchHighSignal(
   count = 5,
-  minPoints = 200
+  minPoints = 200,
+  hours = 720
 ): Promise<HNStory[]> {
-  const since = Math.floor(Date.now() / 1000) - 30 * 24 * 3600;
+  const since = Math.floor(Date.now() / 1000) - hours * 3600;
   const url = `${ALGOLIA}/search?tags=story&numericFilters=points>${minPoints},created_at_i>${since}&hitsPerPage=${count * 2}`;
   const res = await fetch(url, { next: { revalidate: 3600 } });
   const data = await res.json();

@@ -45,7 +45,7 @@ export default function NewsletterEmail({ config, data, unsubscribeUrl }: Newsle
       <Body style={{ backgroundColor: styles.backgroundColor, fontFamily: ff, margin: 0, padding: 0 }}>
         <Container style={{ maxWidth: "600px", margin: "0 auto", padding: "0 0 40px" }}>
           {sections.map((s) => renderSection(s, data, styles, title))}
-          <EmailFooter unsubscribeUrl={unsubscribeUrl} />
+          <EmailFooter unsubscribeUrl={unsubscribeUrl} styles={styles} />
         </Container>
       </Body>
     </Html>
@@ -62,9 +62,7 @@ function renderSection(
     case "intro":
       return <IntroSection key={section.id} section={section} styles={styles} title={title} />;
     case "divider":
-      return <Hr key={section.id} style={{ borderColor: "#e8e8e8", margin: "8px 24px" }} />;
-    case "custom-text":
-      return <CustomTextSection key={section.id} section={section} styles={styles} />;
+      return <Hr key={section.id} style={{ borderColor: isDarkColor(styles.backgroundColor) ? "#333333" : "#e8e8e8", margin: "8px 24px" }} />;
     case "footer":
       return <FooterSection key={section.id} section={section} />;
 
@@ -122,15 +120,6 @@ function IntroSection({
 }
 
 
-function CustomTextSection({ section, styles }: { section: NewsletterSection; styles: NewsletterStyles }) {
-  return (
-    <Section style={{ padding: "8px 24px" }}>
-      <Text style={{ color: styles.textColor, fontSize: "15px", lineHeight: "1.7", margin: "0" }}>
-        {section.props.content ?? ""}
-      </Text>
-    </Section>
-  );
-}
 
 function FooterSection({ section }: { section: NewsletterSection }) {
   return (
@@ -142,19 +131,25 @@ function FooterSection({ section }: { section: NewsletterSection }) {
   );
 }
 
-function EmailFooter({ unsubscribeUrl }: { unsubscribeUrl?: string }) {
+function EmailFooter({ unsubscribeUrl, styles }: { unsubscribeUrl?: string; styles?: NewsletterStyles }) {
+  const dark = styles ? isDarkColor(styles.backgroundColor) : false;
+  const cc = styles ? cardColors(styles) : null;
+  const linkColor = cc ? cc.accent : "#555";
+  const textColor = dark ? "#888888" : "#666";
+  const borderColor = dark ? "#333333" : "#ebebeb";
   return (
-    <Section style={{ borderTop: "1px solid #ebebeb", padding: "20px 24px 0", marginTop: "16px" }}>
-      <Text style={{ color: "#bbb", fontSize: "11px", textAlign: "center", margin: "0 0 6px", lineHeight: "1.6" }}>
-        <Link href="https://github.com/Anmol-Baranwal/hndigest" style={{ color: "#bbb" }}>
+    <Section style={{ borderTop: `1px solid ${borderColor}`, padding: "20px 24px 0", marginTop: "16px" }}>
+      <Text style={{ color: textColor, fontSize: "11px", textAlign: "center", margin: "0 0 6px", lineHeight: "1.6" }}>
+        <Link href="https://github.com/Anmol-Baranwal/hndigest" style={{ color: linkColor }}>
           ⭐ Star HN Digest on GitHub
         </Link>
         {unsubscribeUrl && (
           <>
             {" · "}
-            <Link href={unsubscribeUrl} style={{ color: "#bbb" }}>
-              Unsubscribe
-            </Link>
+            {unsubscribeUrl === "#"
+              ? <span style={{ color: textColor }}>Unsubscribe</span>
+              : <Link href={unsubscribeUrl} style={{ color: textColor }}>Unsubscribe</Link>
+            }
           </>
         )}
       </Text>
@@ -174,32 +169,33 @@ function StoriesSection({
   showGithub?: boolean;
 }) {
   if (stories.length === 0) return null;
+  const cc = cardColors(styles);
 
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
-      <SectionLabel text={label} color={styles.primaryColor} />
+      <SectionLabel text={label} color={cc.accent} />
       {stories.map((story, i) => (
         <Row key={story.id} style={{ marginBottom: "2px" }}>
           <Column style={{ width: "36px", verticalAlign: "top", paddingTop: "14px" }}>
-            <Text style={{ color: styles.primaryColor, fontWeight: "700", fontSize: "16px", margin: "0", lineHeight: "1" }}>
+            <Text style={{ color: cc.accent, fontWeight: "700", fontSize: "16px", margin: "0", lineHeight: "1" }}>
               {i + 1}
             </Text>
           </Column>
           <Column style={{ verticalAlign: "top" }}>
-            <Section style={{ backgroundColor: i % 2 === 0 ? "#fafafa" : "#fff", borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}>
+            <Section style={{ backgroundColor: i % 2 === 0 ? cc.even : cc.odd, borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}>
               <Link
                 href={story.url ?? `https://news.ycombinator.com/item?id=${story.id}`}
-                style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
+                style={{ color: cc.title, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
               >
                 {story.title}
               </Link>
-              <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0", lineHeight: "1" }}>
+              <Text style={{ color: cc.meta, fontSize: "12px", margin: "5px 0 0", lineHeight: "1" }}>
                 {story.score} pts · by {story.by} ·{" "}
-                <Link href={`https://news.ycombinator.com/item?id=${story.id}`} style={{ color: "#999" }}>
+                <Link href={`https://news.ycombinator.com/item?id=${story.id}`} style={{ color: cc.meta }}>
                   {story.descendants ?? 0} comments
                 </Link>
                 {showGithub && story.url?.includes("github.com") && (
-                  <> · <Link href={story.url} style={{ color: styles.primaryColor }}>GitHub →</Link></>
+                  <> · <Link href={story.url} style={{ color: cc.accent }}>GitHub →</Link></>
                 )}
               </Text>
             </Section>
@@ -209,7 +205,7 @@ function StoriesSection({
       <Section style={{ padding: "8px 0 4px" }}>
         <Link
           href={`https://news.ycombinator.com/${label === "Show HN" ? "show" : ""}`}
-          style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}
+          style={{ color: cc.accent, fontSize: "13px", fontWeight: "500" }}
         >
           View more {label} stories →
         </Link>
@@ -220,36 +216,37 @@ function StoriesSection({
 
 function MostCommentedSection({ stories, styles }: { stories: HNStory[]; styles: NewsletterStyles }) {
   if (stories.length === 0) return null;
+  const cc = cardColors(styles);
 
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
-      <SectionLabel text="Most Discussed" color={styles.primaryColor} />
+      <SectionLabel text="Most Discussed" color={cc.accent} />
       {stories.map((story, i) => (
         <Section
           key={story.id}
-          style={{ backgroundColor: i % 2 === 0 ? "#fafafa" : "#fff", borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}
+          style={{ backgroundColor: i % 2 === 0 ? cc.even : cc.odd, borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}
         >
           <Row>
             <Column style={{ verticalAlign: "middle" }}>
               <Link
                 href={story.url ?? `https://news.ycombinator.com/item?id=${story.id}`}
-                style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4" }}
+                style={{ color: cc.title, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4" }}
               >
                 {story.title}
               </Link>
-              <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0" }}>
+              <Text style={{ color: cc.meta, fontSize: "12px", margin: "5px 0 0" }}>
                 {story.score} pts · by {story.by}
               </Text>
             </Column>
             <Column style={{ width: "80px", verticalAlign: "middle", textAlign: "right" }}>
               <Link
                 href={`https://news.ycombinator.com/item?id=${story.id}`}
-                style={{ color: styles.primaryColor, textDecoration: "none" }}
+                style={{ color: cc.accent, textDecoration: "none" }}
               >
-                <Text style={{ color: styles.primaryColor, fontSize: "20px", fontWeight: "700", margin: "0", lineHeight: "1" }}>
+                <Text style={{ color: cc.accent, fontSize: "20px", fontWeight: "700", margin: "0", lineHeight: "1" }}>
                   {story.descendants ?? 0}
                 </Text>
-                <Text style={{ color: "#aaa", fontSize: "10px", margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                <Text style={{ color: cc.meta, fontSize: "10px", margin: "2px 0 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                   comments
                 </Text>
               </Link>
@@ -258,7 +255,7 @@ function MostCommentedSection({ stories, styles }: { stories: HNStory[]; styles:
         </Section>
       ))}
       <Section style={{ padding: "8px 0 4px" }}>
-        <Link href="https://news.ycombinator.com" style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}>
+        <Link href="https://news.ycombinator.com" style={{ color: cc.accent, fontSize: "13px", fontWeight: "500" }}>
           View more on Hacker News →
         </Link>
       </Section>
@@ -268,33 +265,34 @@ function MostCommentedSection({ stories, styles }: { stories: HNStory[]; styles:
 
 function HiringSection({ entries, styles }: { entries: HiringEntry[]; styles: NewsletterStyles }) {
   if (entries.length === 0) return null;
+  const cc = cardColors(styles);
 
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
-      <SectionLabel text="Who's Hiring" color={styles.primaryColor} />
+      <SectionLabel text="Who's Hiring" color={cc.accent} />
       {entries.map((entry) => (
         <Section
           key={entry.id}
-          style={{ backgroundColor: "#fafafa", borderRadius: "8px", padding: "14px 16px", marginBottom: "8px", borderLeft: `3px solid ${styles.primaryColor}` }}
+          style={{ backgroundColor: cc.even, borderRadius: "8px", padding: "14px 16px", marginBottom: "8px", borderLeft: `3px solid ${cc.accent}` }}
         >
           <Row>
             <Column>
-              <Text style={{ color: styles.textColor, fontSize: "15px", fontWeight: "700", margin: "0 0 4px", lineHeight: "1.3" }}>
+              <Text style={{ color: cc.title, fontSize: "15px", fontWeight: "700", margin: "0 0 4px", lineHeight: "1.3" }}>
                 {entry.company}
               </Text>
               {(entry.role || entry.location) && (
-                <Text style={{ color: "#666", fontSize: "12px", margin: "0 0 6px", lineHeight: "1.4" }}>
+                <Text style={{ color: cc.meta, fontSize: "12px", margin: "0 0 6px", lineHeight: "1.4" }}>
                   {[entry.role, entry.location, entry.remote ? "Remote" : null]
                     .filter(Boolean)
                     .join(" · ")}
                 </Text>
               )}
-              <Text style={{ color: "#888", fontSize: "12px", margin: "0 0 8px", lineHeight: "1.5" }}>
+              <Text style={{ color: cc.meta, fontSize: "12px", margin: "0 0 8px", lineHeight: "1.5" }}>
                 {entry.excerpt.slice(0, 140)}{entry.excerpt.length > 140 ? "…" : ""}
               </Text>
               <Link
                 href={entry.commentUrl}
-                style={{ color: styles.primaryColor, fontSize: "12px", fontWeight: "500", textDecoration: "none" }}
+                style={{ color: cc.accent, fontSize: "12px", fontWeight: "500", textDecoration: "none" }}
               >
                 View full posting →
               </Link>
@@ -305,7 +303,7 @@ function HiringSection({ entries, styles }: { entries: HiringEntry[]; styles: Ne
       <Section style={{ padding: "8px 0 4px" }}>
         <Link
           href="https://news.ycombinator.com/jobs"
-          style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}
+          style={{ color: cc.accent, fontSize: "13px", fontWeight: "500" }}
         >
           View all job postings →
         </Link>
@@ -316,16 +314,17 @@ function HiringSection({ entries, styles }: { entries: HiringEntry[]; styles: Ne
 
 function OpenSourceSection({ projects, styles }: { projects: HNStory[]; styles: NewsletterStyles }) {
   if (projects.length === 0) return null;
+  const cc = cardColors(styles);
 
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
-      <SectionLabel text="Open Source" color={styles.primaryColor} />
+      <SectionLabel text="Open Source" color={cc.accent} />
       {projects.map((project) => {
         const repoName = project.url?.replace("https://github.com/", "").split("?")[0] ?? project.title;
         return (
           <Section
             key={project.id}
-            style={{ backgroundColor: "#fafafa", borderRadius: "8px", padding: "14px 16px", marginBottom: "8px" }}
+            style={{ backgroundColor: cc.even, borderRadius: "8px", padding: "14px 16px", marginBottom: "8px" }}
           >
             <Row>
               <Column style={{ width: "24px", paddingTop: "2px" }}>
@@ -334,25 +333,25 @@ function OpenSourceSection({ projects, styles }: { projects: HNStory[]; styles: 
               <Column>
                 <Link
                   href={project.url ?? `https://news.ycombinator.com/item?id=${project.id}`}
-                  style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "700", lineHeight: "1.4", display: "block" }}
+                  style={{ color: cc.title, textDecoration: "none", fontSize: "14px", fontWeight: "700", lineHeight: "1.4", display: "block" }}
                 >
                   {repoName}
                 </Link>
                 {repoName !== project.title && (
-                  <Text style={{ color: "#888", fontSize: "12px", margin: "3px 0 6px", lineHeight: "1.4" }}>
+                  <Text style={{ color: cc.meta, fontSize: "12px", margin: "3px 0 6px", lineHeight: "1.4" }}>
                     {project.title.replace(/^Show HN:\s*/i, "")}
                   </Text>
                 )}
                 <Row style={{ marginTop: "6px" }}>
                   <Column>
-                    <Text style={{ color: "#aaa", fontSize: "12px", margin: "0" }}>
+                    <Text style={{ color: cc.meta, fontSize: "12px", margin: "0" }}>
                       {project.score} pts · by {project.by}
                     </Text>
                   </Column>
                   <Column style={{ textAlign: "right" }}>
                     <Link
                       href={`https://news.ycombinator.com/item?id=${project.id}`}
-                      style={{ color: styles.primaryColor, fontSize: "12px", fontWeight: "500" }}
+                      style={{ color: cc.accent, fontSize: "12px", fontWeight: "500" }}
                     >
                       {project.descendants ?? 0} comments →
                     </Link>
@@ -369,27 +368,28 @@ function OpenSourceSection({ projects, styles }: { projects: HNStory[]; styles: 
 
 function AskHNSection({ stories, styles }: { stories: HNStory[]; styles: NewsletterStyles }) {
   if (stories.length === 0) return null;
+  const cc = cardColors(styles);
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
-      <SectionLabel text="Ask HN" color={styles.primaryColor} />
+      <SectionLabel text="Ask HN" color={cc.accent} />
       {stories.map((story, i) => (
         <Section
           key={story.id}
-          style={{ backgroundColor: i % 2 === 0 ? "#fafafa" : "#fff", borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}
+          style={{ backgroundColor: i % 2 === 0 ? cc.even : cc.odd, borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}
         >
           <Link
             href={`https://news.ycombinator.com/item?id=${story.id}`}
-            style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
+            style={{ color: cc.title, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
           >
             {story.title}
           </Link>
-          <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0" }}>
+          <Text style={{ color: cc.meta, fontSize: "12px", margin: "5px 0 0" }}>
             {story.score} pts · {story.descendants ?? 0} comments · by {story.by}
           </Text>
         </Section>
       ))}
       <Section style={{ padding: "8px 0 4px" }}>
-        <Link href="https://news.ycombinator.com/ask" style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}>
+        <Link href="https://news.ycombinator.com/ask" style={{ color: cc.accent, fontSize: "13px", fontWeight: "500" }}>
           View more Ask HN →
         </Link>
       </Section>
@@ -399,24 +399,25 @@ function AskHNSection({ stories, styles }: { stories: HNStory[]; styles: Newslet
 
 function TopicSection({ section, stories, styles }: { section: NewsletterSection; stories: HNStory[]; styles: NewsletterStyles }) {
   if (stories.length === 0) return null;
+  const cc = cardColors(styles);
   const label = section.props.query ?? "Topic";
-  const window = section.props.hours === 168 ? "this week" : section.props.hours === 48 ? "last 48h" : "last 24h";
+  const window = formatHoursLabel(section.props.hours);
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
-      <SectionLabel text={`${label} · ${window}`} color={styles.primaryColor} />
+      <SectionLabel text={`${label} · ${window}`} color={cc.accent} />
       {stories.map((story, i) => (
         <Section
           key={story.id}
-          style={{ backgroundColor: i % 2 === 0 ? "#fafafa" : "#fff", borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}
+          style={{ backgroundColor: i % 2 === 0 ? cc.even : cc.odd, borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}
         >
           <Link
             href={story.url ?? `https://news.ycombinator.com/item?id=${story.id}`}
-            style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
+            style={{ color: cc.title, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
           >
             {story.title}
           </Link>
-          <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0" }}>
-            {story.score} pts · <Link href={`https://news.ycombinator.com/item?id=${story.id}`} style={{ color: "#999" }}>{story.descendants ?? 0} comments</Link> · by {story.by}
+          <Text style={{ color: cc.meta, fontSize: "12px", margin: "5px 0 0" }}>
+            {story.score} pts · <Link href={`https://news.ycombinator.com/item?id=${story.id}`} style={{ color: cc.meta }}>{story.descendants ?? 0} comments</Link> · by {story.by}
           </Text>
         </Section>
       ))}
@@ -426,34 +427,34 @@ function TopicSection({ section, stories, styles }: { section: NewsletterSection
 
 function RecentGemsSection({ section, stories, styles }: { section: NewsletterSection; stories: HNStory[]; styles: NewsletterStyles }) {
   if (stories.length === 0) return null;
-  const window = section.props.hours === 48 ? "last 48h" : "last 24h";
+  const cc = cardColors(styles);
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
-      <SectionLabel text={`Recent Gems · ${window}`} color={styles.primaryColor} />
+      <SectionLabel text={`Recent Gems · ${formatHoursLabel(section.props.hours)}`} color={cc.accent} />
       {stories.map((story, i) => (
         <Row key={story.id} style={{ marginBottom: "2px" }}>
           <Column style={{ width: "36px", verticalAlign: "top", paddingTop: "14px" }}>
-            <Text style={{ color: styles.primaryColor, fontWeight: "700", fontSize: "16px", margin: "0", lineHeight: "1" }}>
+            <Text style={{ color: cc.accent, fontWeight: "700", fontSize: "16px", margin: "0", lineHeight: "1" }}>
               {i + 1}
             </Text>
           </Column>
           <Column style={{ verticalAlign: "top" }}>
-            <Section style={{ backgroundColor: i % 2 === 0 ? "#fafafa" : "#fff", borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}>
+            <Section style={{ backgroundColor: i % 2 === 0 ? cc.even : cc.odd, borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}>
               <Link
                 href={story.url ?? `https://news.ycombinator.com/item?id=${story.id}`}
-                style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
+                style={{ color: cc.title, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
               >
                 {story.title}
               </Link>
-              <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0" }}>
-                {story.score} pts · <Link href={`https://news.ycombinator.com/item?id=${story.id}`} style={{ color: "#999" }}>{story.descendants ?? 0} comments</Link> · by {story.by}
+              <Text style={{ color: cc.meta, fontSize: "12px", margin: "5px 0 0" }}>
+                {story.score} pts · <Link href={`https://news.ycombinator.com/item?id=${story.id}`} style={{ color: cc.meta }}>{story.descendants ?? 0} comments</Link> · by {story.by}
               </Text>
             </Section>
           </Column>
         </Row>
       ))}
       <Section style={{ padding: "8px 0 4px" }}>
-        <Link href="https://news.ycombinator.com/newest" style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}>
+        <Link href="https://news.ycombinator.com/newest" style={{ color: cc.accent, fontSize: "13px", fontWeight: "500" }}>
           View more recent stories →
         </Link>
       </Section>
@@ -463,32 +464,33 @@ function RecentGemsSection({ section, stories, styles }: { section: NewsletterSe
 
 function HighSignalSection({ section, stories, styles }: { section: NewsletterSection; stories: HNStory[]; styles: NewsletterStyles }) {
   if (stories.length === 0) return null;
+  const cc = cardColors(styles);
   const minPts = (section.props.minPoints && section.props.minPoints > 0) ? section.props.minPoints : 200;
 
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
-      <SectionLabel text={`High Signal · ${minPts}+ pts`} color={styles.primaryColor} />
+      <SectionLabel text={`High Signal · ${minPts}+ upvotes`} color={cc.accent} />
       {stories.map((story, i) => (
         <Section
           key={story.id}
-          style={{ backgroundColor: i % 2 === 0 ? "#fafafa" : "#fff", borderRadius: "6px", padding: "12px 14px", marginBottom: "4px", borderLeft: `3px solid ${styles.primaryColor}` }}
+          style={{ backgroundColor: i % 2 === 0 ? cc.even : cc.odd, borderRadius: "6px", padding: "12px 14px", marginBottom: "4px", borderLeft: `3px solid ${cc.accent}` }}
         >
           <Link
             href={story.url ?? `https://news.ycombinator.com/item?id=${story.id}`}
-            style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
+            style={{ color: cc.title, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
           >
             {story.title}
           </Link>
           <Row style={{ marginTop: "6px" }}>
             <Column>
-              <Text style={{ color: "#999", fontSize: "12px", margin: "0" }}>
+              <Text style={{ color: cc.meta, fontSize: "12px", margin: "0" }}>
                 {story.score} pts · by {story.by}
               </Text>
             </Column>
             <Column style={{ textAlign: "right" }}>
               <Link
                 href={`https://news.ycombinator.com/item?id=${story.id}`}
-                style={{ color: styles.primaryColor, fontSize: "12px" }}
+                style={{ color: cc.accent, fontSize: "12px" }}
               >
                 {story.descendants ?? 0} comments →
               </Link>
@@ -497,7 +499,7 @@ function HighSignalSection({ section, stories, styles }: { section: NewsletterSe
         </Section>
       ))}
       <Section style={{ padding: "8px 0 4px" }}>
-        <Link href="https://news.ycombinator.com/best" style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}>
+        <Link href="https://news.ycombinator.com/best" style={{ color: cc.accent, fontSize: "13px", fontWeight: "500" }}>
           View best on Hacker News →
         </Link>
       </Section>
@@ -507,39 +509,70 @@ function HighSignalSection({ section, stories, styles }: { section: NewsletterSe
 
 function TrendingSection({ stories, styles }: { stories: HNStory[]; styles: NewsletterStyles }) {
   if (stories.length === 0) return null;
+  const cc = cardColors(styles);
 
   return (
     <Section style={{ padding: "20px 24px 8px" }}>
-      <SectionLabel text="Trending" color={styles.primaryColor} />
+      <SectionLabel text="Trending" color={cc.accent} />
       {stories.map((story, i) => (
         <Row key={story.id} style={{ marginBottom: "2px" }}>
           <Column style={{ width: "36px", verticalAlign: "top", paddingTop: "14px" }}>
-            <Text style={{ color: styles.primaryColor, fontWeight: "700", fontSize: "16px", margin: "0", lineHeight: "1" }}>
+            <Text style={{ color: cc.accent, fontWeight: "700", fontSize: "16px", margin: "0", lineHeight: "1" }}>
               {i + 1}
             </Text>
           </Column>
           <Column style={{ verticalAlign: "top" }}>
-            <Section style={{ backgroundColor: i % 2 === 0 ? "#fafafa" : "#fff", borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}>
+            <Section style={{ backgroundColor: i % 2 === 0 ? cc.even : cc.odd, borderRadius: "6px", padding: "12px 14px", marginBottom: "4px" }}>
               <Link
                 href={story.url ?? `https://news.ycombinator.com/item?id=${story.id}`}
-                style={{ color: styles.textColor, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
+                style={{ color: cc.title, textDecoration: "none", fontSize: "14px", fontWeight: "600", lineHeight: "1.4", display: "block" }}
               >
                 {story.title}
               </Link>
-              <Text style={{ color: "#999", fontSize: "12px", margin: "5px 0 0", lineHeight: "1" }}>
-                {story.score} pts · <Link href={`https://news.ycombinator.com/item?id=${story.id}`} style={{ color: "#999" }}>{story.descendants ?? 0} comments</Link> · by {story.by}
+              <Text style={{ color: cc.meta, fontSize: "12px", margin: "5px 0 0", lineHeight: "1" }}>
+                {story.score} pts · <Link href={`https://news.ycombinator.com/item?id=${story.id}`} style={{ color: cc.meta }}>{story.descendants ?? 0} comments</Link> · by {story.by}
               </Text>
             </Section>
           </Column>
         </Row>
       ))}
       <Section style={{ padding: "8px 0 4px" }}>
-        <Link href="https://news.ycombinator.com" style={{ color: styles.primaryColor, fontSize: "13px", fontWeight: "500" }}>
+        <Link href="https://news.ycombinator.com" style={{ color: cc.accent, fontSize: "13px", fontWeight: "500" }}>
           View more on Hacker News →
         </Link>
       </Section>
     </Section>
   );
+}
+
+function isDarkColor(hex: string): boolean {
+  const c = hex.replace("#", "");
+  if (c.length !== 6) return false;
+  const r = parseInt(c.slice(0, 2), 16);
+  const g = parseInt(c.slice(2, 4), 16);
+  const b = parseInt(c.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 < 128;
+}
+
+function cardColors(styles: NewsletterStyles) {
+  const dark = isDarkColor(styles.backgroundColor);
+  // If primaryColor is too dark to see on a dark background, fall back to HN orange
+  const accent = dark && isDarkColor(styles.primaryColor) ? "#FF6600" : styles.primaryColor;
+  return {
+    even: dark ? "#2a2a2a" : "#fafafa",
+    odd: dark ? "#1e1e1e" : "#ffffff",
+    title: dark ? "#f0f0f0" : styles.textColor,
+    meta: dark ? "#999999" : "#999999",
+    accent,
+  };
+}
+
+function formatHoursLabel(hours?: number): string {
+  if (!hours || hours <= 0) return "last 24h";
+  if (hours < 24) return `last ${hours}h`;
+  const days = Math.round(hours / 24);
+  if (days === 7) return "this week";
+  return `last ${days}d`;
 }
 
 function SectionLabel({ text, color }: { text: string; color: string }) {
