@@ -2,13 +2,9 @@
 
 Chat with an AI to build your own Hacker News newsletter. Tell it which sections you want, see your digest update live with real HN data, send a test email, and activate with a magic link.
 
-https://github.com/user-attachments/assets/07a37eb3-b0b6-4e3e-b347-4d6e017865a9
+https://github.com/user-attachments/assets/c35ce1da-96b4-4500-ba41-23135399e027
 
 Build and preview for free. You only need a [Resend](https://resend.com) API key when you're ready to activate (only send access is needed). Emails go out through your key so you can also monitor delivery directly from your Resend dashboard. They give 3,000 free emails per month.
-
-## Activation flow
-
-<!-- activation GIF here -->
 
 ## Sections
 
