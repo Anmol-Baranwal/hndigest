@@ -22,6 +22,36 @@ const SECTION_PALETTE = [
   { type: "high-signal",   icon: "📡", label: "High Signal",       desc: "High upvotes, low comments" },
 ] as const;
 
+function normalizeDividers(sections: import("../lib/types").NewsletterSection[]): import("../lib/types").NewsletterSection[] {
+  const STRUCTURAL = new Set(["intro", "footer", "divider"]);
+  const result: import("../lib/types").NewsletterSection[] = [];
+
+  for (let i = 0; i < sections.length; i++) {
+    const s = sections[i];
+    const prev = result[result.length - 1];
+    const next = sections[i + 1];
+
+    if (s.type === "divider") {
+      // Drop: consecutive, right after intro, right before footer, at start/end
+      if (!prev || prev.type === "intro" || prev.type === "divider") continue;
+      if (!next || next.type === "footer") continue;
+      result.push(s);
+    } else if (!STRUCTURAL.has(s.type)) {
+      // Content section: auto-insert divider if prev is content (not intro/divider)
+      if (prev && prev.type !== "divider" && prev.type !== "intro") {
+        result.push({ id: `divider-auto-${i}`, type: "divider" as const, props: {} });
+      }
+      result.push(s);
+    } else {
+      result.push(s);
+    }
+  }
+
+  return result;
+}
+
+const PREVIEW_CACHE_VERSION = "3";
+
 const PROMPT_SUGGESTIONS = [
   "Add AI news from the last 48 hours + high signal stories with 200+ upvotes",
   "Top stories + recent gems from last 24h + who's hiring, daily at 9am",
@@ -74,6 +104,7 @@ export function NewsletterEditor() {
     await copilotkit.runAgent({ agent });
   };
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const immediateRefreshRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/schedule", { credentials: "include" })
@@ -116,6 +147,7 @@ export function NewsletterEditor() {
   };
 
   const deleteSection = useCallback((id: string) => {
+    immediateRefreshRef.current = true;
     setConfig((prev) => {
       const idx = prev.sections.findIndex(s => s.id === id);
       if (idx === -1) return prev;
@@ -194,41 +226,86 @@ MULTI-INSTANCE types (multiple allowed with different params): topic, recent-gem
 - recent-gems / high-signal: OK to add multiple only if params meaningfully differ. Otherwise update existing.
 
 ── SECTION REFERENCE ──
-Standard sections (no filter params needed — just add with type, optionally count):
-  hn-stories     → top HN front page stories
-  show-hn        → Show HN projects
-  ask-hn         → top Ask HN questions (fetched from last 7 days)
-  hiring         → Who's Hiring thread entries
-  open-source    → GitHub projects from Show HN
-  most-commented → stories sorted by comment count
-  trending       → ranked by upvotes + comments combined
+Standard sections — ONLY support count. NO hours, NO minPoints, NO query. Ever.
+  hn-stories     → display name "Top Stories"
+  show-hn        → display name "Show HN"
+  ask-hn         → display name "Ask HN"
+  hiring         → display name "Who's Hiring"
+  open-source    → display name "Open Source"
+  most-commented → display name "Most Discussed" (NEVER say "Most Commented" — always say "Most Discussed")
+  trending       → display name "Trending"
 
-Filtered sections (always provide these defaults if user doesn't specify):
-  topic          → REQUIRED: query (keyword string). DEFAULT hours=48. count optional.
-                   Example: add_section(type="topic", query="AI", hours=48)
-                   If user says "add topic" without a keyword → ask "What topic should I search for?"
-  recent-gems    → recent stories above an upvote threshold. DEFAULT hours=48, minPoints=50. count optional.
-                   Example: add_section(type="recent-gems", hours=48, minPoints=50)
-  high-signal    → high-upvote stories sorted by score. DEFAULT minPoints=200, hours=720. count optional.
-                   Example: add_section(type="high-signal", minPoints=200, hours=720)
+Filtered sections — support hours, minPoints, query in addition to count:
+  topic(query, hours, count)            → DEFAULT hours=48. REQUIRED query.
+  recent-gems(hours, minPoints, count)  → DEFAULT hours=48, minPoints=50.
+  high-signal(minPoints, hours, count)  → DEFAULT minPoints=200, hours=720.
 
 hours values: 24=1day, 48=2days, 72=3days, 96=4days, 120=5days, 144=6days, 168=1week, 336=2weeks, 480=20days, 720=30days.
-Infer from natural language: "last week" → 168, "last 3 days" → 72, "this month" → 720, "last 2 days" → 48.
 
-Structural:
-  intro   → intro text at top. props: content (string).
-  footer  → footer text at bottom. props: content (string).
-  divider → visual separator, no props.
+Structural (no data, no filters):
+  intro(content), footer(content), divider
+
+── ONE-SHOT EXAMPLES ──
+User: "filter show HN to last 48 hours"
+→ WRONG: do NOT call update_section with hours on show-hn
+→ RIGHT: "Show HN doesn't support timeframe filtering — it always pulls the latest Show HN posts. Want a Topic section with query='Show HN' and hours=48 instead?"
+
+User: "add 10 upvote minimum to ask HN"
+→ WRONG: do NOT add minPoints to ask-hn
+→ RIGHT: "Ask HN only supports count. For upvote filtering try Recent Gems with minPoints=10."
+
+User: "filter top stories to this week"
+→ WRONG: do NOT add hours to hn-stories
+→ RIGHT: "Top Stories doesn't support timeframe filtering. Want a High Signal section (200+ upvotes, last 30 days) instead?"
+
+User: "add AI news"
+→ add_section(type="topic", query="AI", hours=48) → "Added AI topic section for the last 48 hours."
+
+User: "add topic"
+→ Ask: "What topic should I search for?"
+
+User: "add recent gems"
+→ add_section(type="recent-gems", hours=48, minPoints=50) → "Added Recent Gems — posts from last 48h with 50+ upvotes."
+
+User: "add high signal"
+→ add_section(type="high-signal", minPoints=200, hours=720) → "Added High Signal — top posts with 200+ upvotes from the last 30 days."
+
+User: "okay infrastructure" (after recommending topics)
+→ add_section(type="topic", query="infrastructure", hours=48) → "Added Infrastructure for the last 48 hours. It's saved — if no posts show up in the preview right now, they'll appear automatically when matching HN posts are found."
+
+User: "dark mode" / "make it dark" / "black background"
+→ update_style(backgroundColor="#111111", textColor="#ffffff", headerStyle="dark") → "Switched to dark mode — dark background, white text, dark header."
+
+User: "black header" / "dark header"
+→ update_style(headerStyle="dark") → "Dark header set. Say 'light header' to revert, or 'dark mode' to make the whole newsletter dark."
+
+User: "light header" / "revert header" / "white header"
+→ update_style(headerStyle="minimal") → "Switched back to a light header."
+
+User: "make it light again" / "light mode"
+→ update_style(backgroundColor="#ffffff", textColor="#1a1a1a", headerStyle="minimal") → "Switched back to light mode."
+
+User: "make show HN show 10 stories"
+→ update_section(id="<show-hn-id>", count=10) → "Show HN will now show 10 stories."
+
+User: "add Most Discussed + Ask HN + Open Source" (Most Discussed already exists)
+→ add Ask HN, add Open Source (skip most-commented since it exists)
+→ "Most Discussed is already in your newsletter — added Ask HN and Open Source."
+
+User: "add Most Discussed + Ask HN + Open Source" (none exist)
+→ add all three
+→ "Added Most Discussed, Ask HN, and Open Source."
 
 ── RULES ──
 1. BEFORE calling add_section: scan the current sections list above. If the type is a singleton and already exists, call update_section or inform the user instead.
-2. Call add_section EXACTLY ONCE per new section. Exception: inserting multiple dividers between existing sections.
-3. A divider is automatically inserted before every new content section — you do NOT need to add it manually.
-4. NEVER call remove_section unless user says "remove", "delete", or "get rid of". Use the exact id from the sections list.
-5. For filtered sections (topic, recent-gems, high-signal): always include default props even if user doesn't specify — never add them with empty props.
-6. "Move to top" → reorder_sections, place just after any intro.
-7. Stop after completing tool calls. One short sentence to confirm what changed.
-8. Never refuse. If unclear, ask one short clarifying question.`,
+2. Standard sections (hn-stories, show-hn, ask-hn, hiring, open-source, most-commented, trending) ONLY accept count. If user asks for hours/minPoints on these, explain it's not supported and suggest an alternative.
+3. Call add_section EXACTLY ONCE per new section. Exception: inserting multiple dividers between existing sections.
+4. A divider is automatically inserted before every new content section — you do NOT need to add it manually.
+5. NEVER call remove_section unless user says "remove", "delete", or "get rid of". Use the exact id from the sections list.
+6. For filtered sections (topic, recent-gems, high-signal): always include default props even if user doesn't specify.
+7. "Move to top" → reorder_sections, place just after any intro.
+8. Stop after completing tool calls. One short sentence to confirm what changed.
+9. Never refuse. If unclear, ask one short clarifying question.`,
   });
 
   useFrontendTool(
@@ -247,6 +324,8 @@ Structural:
       }),
       handler: async ({ type, text, content, level, count, query, hours, minPoints }) => {
         const SINGLETON_TYPES = ["hn-stories", "show-hn", "hiring", "open-source", "most-commented", "trending", "ask-hn", "intro", "footer"];
+        const STANDARD_TYPES = ["hn-stories", "show-hn", "ask-hn", "hiring", "open-source", "most-commented", "trending"];
+        const isStandard = STANDARD_TYPES.includes(type);
         const section: NewsletterSection = {
           id: `${type}-${Date.now()}`,
           type: type as SectionType,
@@ -255,9 +334,10 @@ Structural:
             ...(content !== undefined && { content }),
             ...(level !== undefined && { level }),
             ...(count !== undefined && count > 0 && { count }),
-            ...(query !== undefined && { query }),
-            ...(hours !== undefined && { hours }),
-            ...(minPoints !== undefined && { minPoints }),
+            // Standard sections don't support these — strip them even if AI passes them
+            ...(!isStandard && query !== undefined && { query }),
+            ...(!isStandard && hours !== undefined && { hours }),
+            ...(type === "recent-gems" || type === "high-signal" ? (minPoints !== undefined && { minPoints }) : {}),
           },
         };
         const isContent = !["divider", "intro", "footer"].includes(type);
@@ -316,9 +396,23 @@ Structural:
         minPoints: z.number().optional(),
       }),
       handler: async ({ id, ...props }) => {
+        const STANDARD_TYPES = ["hn-stories", "show-hn", "ask-hn", "hiring", "open-source", "most-commented", "trending"];
         setConfig((prev) => ({
           ...prev,
-          sections: prev.sections.map((s) => (s.id === id ? { ...s, props: { ...s.props, ...props } } : s)),
+          sections: prev.sections.map((s) => {
+            if (s.id !== id) return s;
+            const sanitized = { ...props };
+            // Standard sections only support count — strip hours, minPoints, query
+            if (STANDARD_TYPES.includes(s.type)) {
+              delete sanitized.hours;
+              delete sanitized.minPoints;
+              delete sanitized.query;
+            }
+            // topic doesn't support minPoints; recent-gems/high-signal don't support query
+            if (s.type === "topic") delete sanitized.minPoints;
+            if (s.type === "recent-gems" || s.type === "high-signal") delete sanitized.query;
+            return { ...s, props: { ...s.props, ...sanitized } };
+          }),
         }));
         return `Updated ${id}`;
       },
@@ -473,7 +567,7 @@ Structural:
   );
 
   const refreshPreview = useCallback(async () => {
-    const cacheKey = JSON.stringify(config);
+    const cacheKey = `${PREVIEW_CACHE_VERSION}:${JSON.stringify(config)}`;
     const cached = previewCacheRef.current.get(cacheKey);
     if (cached) {
       setPreviewHtml(cached);
@@ -506,9 +600,20 @@ Structural:
   }, [config]);
 
   useEffect(() => {
+    const normalized = normalizeDividers(config.sections);
+    const typeSeq = (s: NewsletterSection[]) => s.map(x => x.type).join(",");
+    if (typeSeq(normalized) !== typeSeq(config.sections)) {
+      setConfig(prev => ({ ...prev, sections: normalized }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config.sections]);
+
+  useEffect(() => {
     if (configLoading) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(refreshPreview, 500);
+    const delay = immediateRefreshRef.current ? 0 : 500;
+    immediateRefreshRef.current = false;
+    debounceRef.current = setTimeout(refreshPreview, delay);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [config, refreshPreview, configLoading]);
 
@@ -562,7 +667,6 @@ Structural:
                           const details = [
                             s.props.query && `"${s.props.query}"`,
                             s.props.hours && `${s.props.hours}h`,
-                            s.props.minPoints && `${s.props.minPoints}+ pts`,
                             s.props.count && `×${s.props.count}`,
                           ].filter(Boolean).join(" · ");
                           return (
@@ -671,7 +775,7 @@ Structural:
             <Icons.sidebar />
             Preview
           </button>
-          {!hasSchedule && (
+          {!configLoading && !hasSchedule && (
             <button
               onClick={() => setShowActivate(true)}
               className="text-sm bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent-hover transition-colors font-medium"
