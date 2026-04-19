@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { instrumentSerif, inter } from "@/lib/fonts";
+import { instrumentSerif, geist, jetbrainsMono } from "@/lib/fonts";
 
 export const metadata: Metadata = {
   title: "HN Digest",
@@ -14,7 +14,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`h-full ${instrumentSerif.variable} ${inter.variable}`}>
+    <html
+      lang="en"
+      className={`h-full ${instrumentSerif.variable} ${geist.variable} ${jetbrainsMono.variable}`}
+    >
       <body className="min-h-full">{children}</body>
     </html>
   );

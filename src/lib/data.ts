@@ -3,7 +3,7 @@ export const SECTION_CARDS = [
   { label: "Show HN", desc: "Projects people built", color: "#7C3AED" },
   { label: "Ask HN", desc: "Top questions", color: "#6366F1" },
   { label: "Who's Hiring", desc: "Monthly hiring thread", color: "#0284C7" },
-  { label: "Open Source", desc: "GitHub projects", color: "#16A34A" },
+  { label: "Open Source", desc: "GitHub projects from Show HN", color: "#16A34A" },
   { label: "Topic Search", desc: "Any keyword, filter by timeframe", color: "#0891B2" },
   { label: "Trending", desc: "Upvotes + comments score", color: "#D97706" },
   { label: "Most Discussed", desc: "Highest comment count", color: "#DC2626" },
